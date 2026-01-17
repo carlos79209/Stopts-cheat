@@ -124,11 +124,145 @@
     return [...new Set(heads)];
   }
 
+  function getCurrentTopic() {
+    const preferred = document.querySelector(
+      "#screenGame h3, #screenGame h2, #screenGame h1, h3, h2, h1"
+    );
+    if (!preferred) return null;
+
+    let text = preferred.textContent || "";
+    if (text.includes(":")) {
+      text = text.slice(text.indexOf(":") + 1);
+    }
+
+    text = text
+      .replace(/TEMA|CATEGORIA|ASSUNTO/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return text ? text.toUpperCase() : null;
+  }
+
   function getSuggestion(letter, category) {
     const key = resolveTopicKey(category);
     const list = dictionary?.[letter]?.[key];
     if (!list || !list.length) return "Sem resposta";
     return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function extractAnswerText(block) {
+    const label = block.matches?.("label") ? block : block.querySelector?.("label");
+    if (label) {
+      const labelText = label.querySelector("p")?.textContent?.trim();
+      if (labelText) return labelText.toUpperCase();
+      const labelOwnText = label.textContent?.trim();
+      if (labelOwnText) return labelOwnText.toUpperCase();
+    }
+
+    const input = block.querySelector("input, textarea");
+    if (input && input.value) return input.value.trim().toUpperCase();
+
+    const textParts = [];
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tag = parent.tagName;
+        if (["BUTTON", "INPUT", "TEXTAREA", "SELECT"].includes(tag)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+
+    let current = walker.nextNode();
+    while (current) {
+      textParts.push(current.textContent);
+      current = walker.nextNode();
+    }
+
+    let text = textParts
+      .join(" ")
+      .replace(/VALIDADO/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (text) return text.toUpperCase();
+
+    const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const buttonTexts = [...block.querySelectorAll("button")]
+      .map((btn) => btn.innerText.trim())
+      .filter(Boolean);
+    let fallback = block.innerText;
+    buttonTexts.forEach((label) => {
+      fallback = fallback.replace(new RegExp(escapeRegex(label), "g"), "");
+    });
+
+    fallback = fallback
+      .replace(/VALIDADO/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return fallback ? fallback.toUpperCase() : "";
+  }
+
+  function addValidAnswersToDictionary() {
+    const letter = getCurrentLetter();
+    if (!letter) return 0;
+
+    const topicRaw = getCurrentTopic();
+    if (!topicRaw) return 0;
+    const topic = resolveTopicKey(topicRaw);
+
+    const answerBlocks = document.querySelectorAll("div.validate.answer, .validate.answer");
+    const blocks = answerBlocks.length ? answerBlocks : document.querySelectorAll("label, div");
+
+    let addedCount = 0;
+
+    blocks.forEach((block) => {
+      const statusText = block
+        .querySelector?.("span, .status")
+        ?.innerText?.toUpperCase();
+      const validated =
+        block.classList.contains("valid") ||
+        (statusText && statusText.includes("VALIDADO"));
+      if (!validated) return;
+
+      const word = extractAnswerText(block);
+      if (!word) return;
+
+      userDictionary[letter] ??= {};
+      userDictionary[letter][topic] ??= [];
+
+      if (!userDictionary[letter][topic].includes(word)) {
+        userDictionary[letter][topic].push(word);
+        addedCount += 1;
+      }
+    });
+
+    if (addedCount > 0) {
+      saveDictionary(userDictionary);
+      dictionary = mergeDictionary(userDictionary, repoDictionary);
+    }
+
+    return addedCount;
+  }
+
+  function waitForValidationAndAdd(onDone) {
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      const hasValidated =
+        document.querySelector(".valid") ||
+        [...document.querySelectorAll("div")].some((div) =>
+          div.innerText.toUpperCase().includes("VALIDADO")
+        );
+
+      if (hasValidated || Date.now() - startedAt > 3000) {
+        clearInterval(timer);
+        const added = addValidAnswersToDictionary() || 0;
+        onDone(added);
+      }
+    }, 200);
   }
 
   function findEvaluateButton() {
@@ -850,6 +984,9 @@
   // Avaliar + adicionar (mantive simples aqui: só aparece se tiver botão AVALIAR)
   // Você pode plugar sua lógica completa de "validado" depois, se quiser.
   // ======================
+  let lastValidationKey = "";
+  let lastValidationStatus = "";
+
   function renderActions() {
     actions.innerHTML = "";
     const evalBtn = findEvaluateButton();
@@ -861,6 +998,30 @@
     actions.appendChild(fillBtn);
 
     if (evalBtn) {
+      const letter = getCurrentLetter();
+      const topic = getCurrentTopic();
+      const validationKey = `${letter || ""}::${topic || ""}`;
+
+      if (validationKey !== lastValidationKey) {
+        lastValidationKey = validationKey;
+        lastValidationStatus = "";
+      }
+
+      const addBtn = document.createElement("button");
+      addBtn.className = "sh-actionbtn primary";
+      addBtn.textContent = lastValidationStatus || "AVALIAR E ADICIONAR";
+      if (lastValidationStatus) addBtn.disabled = true;
+      addBtn.onclick = () => {
+        evalBtn.click();
+        waitForValidationAndAdd((added) => {
+          lastValidationStatus = added > 0 ? "ADICIONADO" : "JA ADICIONADO";
+          showToast(added > 0 ? `Adicionado: ${added}` : "Nada para adicionar");
+          render(true);
+        });
+        addBtn.disabled = true;
+      };
+      actions.appendChild(addBtn);
+
       const b = document.createElement("button");
       b.className = "sh-actionbtn primary";
       b.textContent = "AVALIAR (usar botão do site)";
