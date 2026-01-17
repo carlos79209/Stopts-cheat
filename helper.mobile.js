@@ -212,6 +212,21 @@
     suggestionsMap[norm(category)] = word;
   }
 
+  function setInputValue(input, value) {
+    const setter = Object.getOwnPropertyDescriptor(
+      Object.getPrototypeOf(input),
+      "value"
+    )?.set;
+    if (setter) {
+      setter.call(input, value);
+    } else {
+      input.value = value;
+    }
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.dataset.shValue = value;
+  }
+
   function fillAnswers() {
     const letter = getCurrentLetter();
     if (!letter) {
@@ -235,9 +250,7 @@
       const word = suggestionsMap[key];
       const input = map.get(key);
       if (input && word && norm(word) !== "SEM RESPOSTA") {
-        input.value = word;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
+        setInputValue(input, word);
         filled += 1;
       } else {
         missing += 1;
@@ -281,9 +294,7 @@
 
             const input = inputByTopic.get(topic);
             if (input && input.value.trim().length === 0) {
-              input.value = suggestion;
-              input.dispatchEvent(new Event("input", { bubbles: true }));
-              input.dispatchEvent(new Event("change", { bubbles: true }));
+              setInputValue(input, suggestion);
               filled += 1;
               setSuggestion(topic, suggestion);
             }
@@ -787,6 +798,26 @@
       panel.style.display = "none";
       lockBodyScroll(false);
     }
+  });
+
+  document.addEventListener("focusin", (e) => {
+    const input = e.target;
+    if (!input || !input.matches("input, textarea")) return;
+    const stored = input.dataset.shValue;
+    if (!stored) return;
+    if (input.value.trim().length !== 0) return;
+    setTimeout(() => {
+      if (input.value.trim().length === 0) {
+        setInputValue(input, stored);
+      }
+    }, 0);
+  });
+
+  document.addEventListener("input", (e) => {
+    const input = e.target;
+    if (!input || !input.matches("input, textarea")) return;
+    if (input.dataset.shValue === undefined) return;
+    input.dataset.shValue = input.value;
   });
 
   // >>> CONFIG: abre nova guia
