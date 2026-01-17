@@ -17,7 +17,7 @@ nao requer extensao.
 1) Copie o bookmarklet no link acima.
 2) Abra o gerenciador de favoritos do navegador.
 3) Crie um novo favorito (ou edite um existente).
-4) No campo URL/EndereÃ§o, cole o bookmarklet completo.
+4) No campo URL/Endereço, cole o bookmarklet completo.
 5) Salve. Para usar, abra o Stopots e toque no favorito.
 
 ## Configurar API Key (IA)
@@ -44,28 +44,6 @@ No jogo:
 - AVALIAR (usar botao do site): clica no botao do Stopots.
 - Recarregar dicionario: recarrega repo + localStorage.
 - API Key: salva a chave no `localStorage` do Stopots.
-
-## Erros comuns e solucoes
-
-1) "Defina sua OpenRouter API Key..."
-   - A chave foi salva em outro dominio (ex: pagina config).
-   - Solucao: abra o Stopots e use o botao "API Key" no menu do helper.
-
-2) Botao PREENCHER coloca "Sem resposta"
-   - Indica que nao existem sugestoes para a categoria.
-   - Solucao: use "PREENCHER" para acionar IA ou adicione palavras no dicionario.
-
-3) As palavras somem ao focar o campo
-   - O helper restaura os valores automaticamente quando o input fica vazio.
-   - Se ainda acontecer, clique em "PREENCHER" novamente.
-
-4) Painel nao aparece
-   - Verifique se o bookmarklet foi salvo corretamente no favorito.
-   - Tente recarregar a pagina e ativar o favorito novamente.
-
-5) Dicionario do repo nao carrega
-   - O helper tenta carregar `background.js` da mesma pasta do `helper.mobile.js`.
-   - Garanta que ambos estejam hospedados no mesmo local.
 
 ## Dicas
 
