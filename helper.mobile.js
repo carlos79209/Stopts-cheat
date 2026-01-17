@@ -788,9 +788,11 @@
   const importBtn = document.getElementById("sh-import");
 
   let panelMode = "suggestions";
+  let lastPanelMode = "suggestions";
 
   function showSuggestionsView() {
     panelMode = "suggestions";
+    lastPanelMode = "suggestions";
     if (titleEl) titleEl.textContent = "Sugestoes";
     if (configView) configView.style.display = "none";
     actions.style.display = "flex";
@@ -800,6 +802,7 @@
 
   function showConfigView() {
     panelMode = "config";
+    lastPanelMode = "config";
     if (titleEl) titleEl.textContent = "Configurar dicionario";
     subtitle.textContent = "";
     actions.style.display = "none";
@@ -928,7 +931,11 @@
     } else {
       positionPanelNearButton();
     }
-    showSuggestionsView();
+    if (lastPanelMode === "config") {
+      showConfigView();
+    } else {
+      showSuggestionsView();
+    }
   }
 
   let ignoreClick = false;
