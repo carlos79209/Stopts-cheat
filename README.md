@@ -37,6 +37,13 @@ No jogo:
   - Dicionario do usuario salvo no `localStorage`.
 - As palavras geradas pela IA sao salvas apenas no `localStorage`.
 
+## Importar / Exportar dicionario
+
+No jogo:
+1) Abra a bolinha -> "Configurar dicionario".
+2) Use "Exportar dicionario" para copiar o JSON atual.
+3) Cole um JSON valido e toque em "Importar dicionario" para mesclar.
+
 ## Funcoes principais
 
 - PREENCHER: preenche campos vazios com sugestoes do painel.
