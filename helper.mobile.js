@@ -641,7 +641,6 @@
     #sh-btn{
       width:48px;height:48px;border-radius:999px;
       background:#29d3b2; display:flex;align-items:center;justify-content:center;
-      background-image:url('icon.png');
       background-size:70% 70%;
       background-repeat:no-repeat;
       background-position:center;
@@ -790,6 +789,11 @@
   const configText = document.getElementById("sh-config-text");
   const exportBtn = document.getElementById("sh-export");
   const importBtn = document.getElementById("sh-import");
+
+  const helperBase = getHelperBaseUrl();
+  if (helperBase) {
+    btn.style.backgroundImage = `url('${helperBase}/icon.png')`;
+  }
 
   let panelMode = "suggestions";
   let lastPanelMode = "suggestions";
