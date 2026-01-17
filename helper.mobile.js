@@ -860,7 +860,7 @@
     panel.style.display = "none";
     menu.style.display = "block";
     lockBodyScroll(false);
-    btn.style.display = "flex";
+    btn.style.display = "none";
   }
 
   function showPanel() {
@@ -1125,6 +1125,7 @@
     if (window.PointerEvent) {
       header.addEventListener("pointerdown", (e) => {
         if (e.button && e.button !== 0) return;
+        if (e.target && e.target.closest("button")) return;
         startPanelDrag(e.clientX, e.clientY);
         header.setPointerCapture(e.pointerId);
       });
@@ -1141,6 +1142,7 @@
     } else {
       header.addEventListener("mousedown", (e) => {
         if (e.button && e.button !== 0) return;
+        if (e.target && e.target.closest("button")) return;
         startPanelDrag(e.clientX, e.clientY);
         const onMove = (ev) => movePanelDrag(ev.clientX, ev.clientY);
         const onUp = () => {
@@ -1154,6 +1156,7 @@
         "touchstart",
         (e) => {
           if (e.touches.length !== 1) return;
+          if (e.target && e.target.closest("button")) return;
           const t = e.touches[0];
           startPanelDrag(t.clientX, t.clientY);
           const onMove = (ev) => {
