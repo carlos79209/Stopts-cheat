@@ -8,6 +8,7 @@
   const LS_KEY_API = "openrouterApiKey";
   const LS_KEY_POS = "stopots_helper_pos";
   const LS_KEY_PANEL_POS = "stopots_helper_panel_pos";
+  const LS_KEY_MENU_POS = "stopots_helper_menu_pos";
   const loadDictionary = () => JSON.parse(localStorage.getItem(LS_KEY) || "{}");
   const saveDictionary = (dict) => localStorage.setItem(LS_KEY, JSON.stringify(dict));
   let userDictionary = {};
@@ -100,6 +101,18 @@
 
   function savePanelPosition(pos) {
     localStorage.setItem(LS_KEY_PANEL_POS, JSON.stringify(pos));
+  }
+
+  function loadMenuPosition() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_KEY_MENU_POS) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function saveMenuPosition(pos) {
+    localStorage.setItem(LS_KEY_MENU_POS, JSON.stringify(pos));
   }
 
   // ======================
@@ -639,11 +652,14 @@
     /* MENU */
     #sh-menu{
       display:none;
+      position:fixed;
+      right:16px;
+      bottom:80px;
       width:220px;
       background:rgba(49,43,153,.95);
       border-radius:16px;
       padding:10px;
-      margin-bottom:10px;
+      margin-bottom:0;
       color:#fff;
       box-shadow:0 10px 20px rgba(0,0,0,.28);
     }
@@ -651,6 +667,8 @@
       font-weight:800;
       text-align:center;
       margin-bottom:10px;
+      cursor:move;
+      user-select:none;
     }
     .sh-menu-btn{
       width:100%;
@@ -751,6 +769,7 @@
   const btn = document.getElementById("sh-btn");
   const menu = document.getElementById("sh-menu");
   const panel = document.getElementById("sh-panel");
+  const menuTitle = document.querySelector(".sh-menu-title");
 
   const goPlay = document.getElementById("sh-go-play");
   const goConfig = document.getElementById("sh-go-config");
@@ -838,6 +857,34 @@
     applyPanelPosition(pos);
   }
 
+  function clampMenuPosition(x, y) {
+    const pad = 8;
+    const rect = menu.getBoundingClientRect();
+    const maxX = Math.max(pad, window.innerWidth - rect.width - pad);
+    const maxY = Math.max(pad, window.innerHeight - rect.height - pad);
+    return {
+      x: Math.min(Math.max(pad, x), maxX),
+      y: Math.min(Math.max(pad, y), maxY),
+    };
+  }
+
+  function applyMenuPosition(pos) {
+    if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") return;
+    menu.style.right = "auto";
+    menu.style.bottom = "auto";
+    menu.style.left = `${pos.x}px`;
+    menu.style.top = `${pos.y}px`;
+  }
+
+  function positionMenuNearButton() {
+    const btnRect = btn.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const x = btnRect.left - Math.max(0, menuRect.width - btnRect.width);
+    const y = btnRect.top - menuRect.height - 12;
+    const pos = clampMenuPosition(x, y);
+    applyMenuPosition(pos);
+  }
+
   // Evita “scroll da página” interferindo com o painel
   function lockBodyScroll(lock) {
     document.documentElement.style.overscrollBehavior = lock ? "none" : "";
@@ -861,6 +908,12 @@
     menu.style.display = "block";
     lockBodyScroll(false);
     btn.style.display = "none";
+    const savedMenuPos = loadMenuPosition();
+    if (savedMenuPos) {
+      applyMenuPosition(savedMenuPos);
+    } else {
+      positionMenuNearButton();
+    }
   }
 
   function showPanel() {
@@ -1168,6 +1221,92 @@
           const onEnd = () => {
             window.removeEventListener("touchmove", onMove);
             endPanelDrag();
+          };
+          window.addEventListener("touchmove", onMove, { passive: false });
+          window.addEventListener("touchend", onEnd, { once: true });
+          window.addEventListener("touchcancel", onEnd, { once: true });
+        },
+        { passive: true }
+      );
+    }
+  }
+
+  if (menuTitle) {
+    let menuDragActive = false;
+    let menuStartX = 0;
+    let menuStartY = 0;
+    let menuStartLeft = 0;
+    let menuStartTop = 0;
+
+    const startMenuDrag = (clientX, clientY) => {
+      menuDragActive = true;
+      menuStartX = clientX;
+      menuStartY = clientY;
+      const rect = menu.getBoundingClientRect();
+      menuStartLeft = rect.left;
+      menuStartTop = rect.top;
+    };
+
+    const moveMenuDrag = (clientX, clientY) => {
+      if (!menuDragActive) return;
+      const dx = clientX - menuStartX;
+      const dy = clientY - menuStartY;
+      const pos = clampMenuPosition(menuStartLeft + dx, menuStartTop + dy);
+      applyMenuPosition(pos);
+    };
+
+    const endMenuDrag = () => {
+      if (!menuDragActive) return;
+      menuDragActive = false;
+      const rect = menu.getBoundingClientRect();
+      const pos = clampMenuPosition(rect.left, rect.top);
+      applyMenuPosition(pos);
+      saveMenuPosition(pos);
+    };
+
+    if (window.PointerEvent) {
+      menuTitle.addEventListener("pointerdown", (e) => {
+        if (e.button && e.button !== 0) return;
+        startMenuDrag(e.clientX, e.clientY);
+        menuTitle.setPointerCapture(e.pointerId);
+      });
+      menuTitle.addEventListener("pointermove", (e) => {
+        moveMenuDrag(e.clientX, e.clientY);
+      });
+      menuTitle.addEventListener("pointerup", (e) => {
+        try {
+          menuTitle.releasePointerCapture(e.pointerId);
+        } catch {}
+        endMenuDrag();
+      });
+      menuTitle.addEventListener("pointercancel", endMenuDrag);
+    } else {
+      menuTitle.addEventListener("mousedown", (e) => {
+        if (e.button && e.button !== 0) return;
+        startMenuDrag(e.clientX, e.clientY);
+        const onMove = (ev) => moveMenuDrag(ev.clientX, ev.clientY);
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          endMenuDrag();
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp, { once: true });
+      });
+      menuTitle.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length !== 1) return;
+          const t = e.touches[0];
+          startMenuDrag(t.clientX, t.clientY);
+          const onMove = (ev) => {
+            const tt = ev.touches[0];
+            if (!tt) return;
+            moveMenuDrag(tt.clientX, tt.clientY);
+            ev.preventDefault();
+          };
+          const onEnd = () => {
+            window.removeEventListener("touchmove", onMove);
+            endMenuDrag();
           };
           window.addEventListener("touchmove", onMove, { passive: false });
           window.addEventListener("touchend", onEnd, { once: true });
