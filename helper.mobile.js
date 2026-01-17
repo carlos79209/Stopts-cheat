@@ -580,7 +580,7 @@
     <div id="sh-panel" aria-hidden="true">
       <div id="sh-header">
         <div class="sh-header-left">
-          <span class="sh-title">Sugestões</span>
+          <span class="sh-title" id="sh-title">Sugestões</span>
           <span class="sh-sub" id="sh-subtitle"></span>
         </div>
         <div class="sh-header-right">
@@ -590,6 +590,13 @@
 
       <div id="sh-actions"></div>
       <div id="sh-content"></div>
+      <div id="sh-config" style="display:none;">
+        <div class="sh-config-row">
+          <button class="sh-actionbtn ghost" id="sh-export">Exportar dicionario</button>
+          <button class="sh-actionbtn ghost" id="sh-import">Importar dicionario</button>
+        </div>
+        <textarea id="sh-config-text" placeholder="Cole o dicionario aqui"></textarea>
+      </div>
       <div id="sh-toast" style="display:none;"></div>
     </div>
 
@@ -703,6 +710,10 @@
     }
     .copy{ background:#ff8995; color:#fff; }
     .next{ background:#fabdc3; color:#1d1d1d; }
+    #sh-config{ margin-bottom:8px; }
+    .sh-config-row{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+    #sh-config-text{ width:100%; min-height:120px; border-radius:12px; border:1px solid rgba(255,255,255,.2); padding:10px; background:rgba(0,0,0,.15); color:#fff; font-size:12px; outline:none; }
+
 
     #sh-toast{
       margin-top:8px;
@@ -733,6 +744,31 @@
   const content = document.getElementById("sh-content");
   const toast = document.getElementById("sh-toast");
   const subtitle = document.getElementById("sh-subtitle");
+  const titleEl = document.getElementById("sh-title");
+  const configView = document.getElementById("sh-config");
+  const configText = document.getElementById("sh-config-text");
+  const exportBtn = document.getElementById("sh-export");
+  const importBtn = document.getElementById("sh-import");
+
+  let panelMode = "suggestions";
+
+  function showSuggestionsView() {
+    panelMode = "suggestions";
+    if (titleEl) titleEl.textContent = "Sugestoes";
+    if (configView) configView.style.display = "none";
+    actions.style.display = "flex";
+    content.style.display = "block";
+    render(true);
+  }
+
+  function showConfigView() {
+    panelMode = "config";
+    if (titleEl) titleEl.textContent = "Configurar dicionario";
+    subtitle.textContent = "";
+    actions.style.display = "none";
+    content.style.display = "none";
+    if (configView) configView.style.display = "block";
+  }
 
   function clampPosition(x, y) {
     const pad = 8;
@@ -785,7 +821,7 @@
     panel.style.display = "block";
     lockBodyScroll(true);
     if (dictionariesReady) dictionariesReady.then(() => render(true));
-    render(); // atualiza ao abrir
+    showSuggestionsView();
   }
 
   let ignoreClick = false;
@@ -933,6 +969,39 @@
     showToast("API Key salva");
   };
 
+  if (exportBtn && importBtn && configText) {
+    exportBtn.onclick = async () => {
+      const txt = JSON.stringify(userDictionary || {});
+      configText.value = txt;
+      try {
+        await navigator.clipboard.writeText(txt);
+        showToast("Dicionario copiado");
+      } catch {
+        configText.focus();
+        configText.select();
+        showToast("Dicionario pronto para copiar");
+      }
+    };
+
+    importBtn.onclick = () => {
+      const txt = (configText.value || "").trim();
+      if (!txt) {
+        showToast("Cole um dicionario valido");
+        return;
+      }
+      try {
+        const imported = JSON.parse(txt);
+        const merged = mergeDictionary(imported, userDictionary);
+        userDictionary = merged;
+        saveDictionary(userDictionary);
+        dictionary = mergeDictionary(userDictionary, repoDictionary);
+        showToast("Dicionario importado");
+      } catch (e) {
+        showToast("JSON invalido");
+      }
+    };
+  }
+
   document.addEventListener("pointerdown", (e) => {
     if (overlay.contains(e.target)) return;
     if (menu.style.display === "block" || panel.style.display === "block") {
@@ -965,9 +1034,11 @@
   // >>> CONFIG: abre nova guia
   // Ajuste este caminho para onde você hospedar a página config:
   // Ex: https://seusite.com/config.html
-  const CONFIG_URL = "https://carlos79209.github.io/Stopts-cheat/config.html";
   goConfig.onclick = () => {
-    window.open(CONFIG_URL, "_blank");
+    menu.style.display = "none";
+    panel.style.display = "block";
+    lockBodyScroll(true);
+    showConfigView();
   };
 
   // ======================
@@ -1105,7 +1176,7 @@
   }
 
   function render(force = false) {
-    if (panel.style.display !== "block") return;
+    if (panel.style.display !== "block" || panelMode !== "suggestions") return;
 
     const scrollBefore = panel.scrollTop;
 
@@ -1140,6 +1211,9 @@
   // Inicial
   showMenu();
 })();
+
+
+
 
 
 
