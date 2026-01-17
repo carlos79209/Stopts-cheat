@@ -234,7 +234,7 @@
       const key = norm(cat0);
       const word = suggestionsMap[key];
       const input = map.get(key);
-      if (input && word && word !== "Sem resposta") {
+      if (input && word && norm(word) !== "SEM RESPOSTA") {
         input.value = word;
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new Event("change", { bubbles: true }));
@@ -458,6 +458,7 @@
       user-select:none;
       opacity:.92;
       cursor:grab;
+      touch-action:none;
     }
     #sh-btn:active{ cursor:grabbing; }
 
@@ -633,14 +634,22 @@
   }
 
   let ignoreClick = false;
-  const dragState = { active: false, moved: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
+  const dragState = {
+    active: false,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    startLeft: 0,
+    startTop: 0,
+    pointerId: null,
+  };
 
-  btn.addEventListener("pointerdown", (e) => {
-    if (e.button && e.button !== 0) return;
+  function startDrag(clientX, clientY, pointerId) {
     dragState.active = true;
     dragState.moved = false;
-    dragState.startX = e.clientX;
-    dragState.startY = e.clientY;
+    dragState.startX = clientX;
+    dragState.startY = clientY;
+    dragState.pointerId = pointerId ?? null;
     const rect = btn.getBoundingClientRect();
     dragState.startLeft = rect.left;
     dragState.startTop = rect.top;
@@ -648,26 +657,23 @@
     overlay.style.bottom = "auto";
     overlay.style.left = `${dragState.startLeft}px`;
     overlay.style.top = `${dragState.startTop}px`;
-    btn.setPointerCapture(e.pointerId);
-  });
+  }
 
-  btn.addEventListener("pointermove", (e) => {
+  function moveDrag(clientX, clientY) {
     if (!dragState.active) return;
-    const dx = e.clientX - dragState.startX;
-    const dy = e.clientY - dragState.startY;
+    const dx = clientX - dragState.startX;
+    const dy = clientY - dragState.startY;
     if (!dragState.moved && Math.hypot(dx, dy) < 6) return;
     dragState.moved = true;
     const pos = clampPosition(dragState.startLeft + dx, dragState.startTop + dy);
     overlay.style.left = `${pos.x}px`;
     overlay.style.top = `${pos.y}px`;
-  });
+  }
 
-  function endDrag(e) {
+  function finishDrag() {
     if (!dragState.active) return;
     dragState.active = false;
-    try {
-      btn.releasePointerCapture(e.pointerId);
-    } catch {}
+    dragState.pointerId = null;
     const rect = btn.getBoundingClientRect();
     const pos = clampPosition(rect.left, rect.top);
     overlay.style.left = `${pos.x}px`;
@@ -679,8 +685,67 @@
     }
   }
 
-  btn.addEventListener("pointerup", endDrag);
-  btn.addEventListener("pointercancel", endDrag);
+  if (window.PointerEvent) {
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.button && e.button !== 0) return;
+      startDrag(e.clientX, e.clientY, e.pointerId);
+      btn.setPointerCapture(e.pointerId);
+    });
+
+    btn.addEventListener("pointermove", (e) => {
+      if (!dragState.active) return;
+      if (dragState.pointerId !== null && e.pointerId !== dragState.pointerId) return;
+      moveDrag(e.clientX, e.clientY);
+    });
+
+    btn.addEventListener("pointerup", (e) => {
+      if (dragState.pointerId !== null && e.pointerId !== dragState.pointerId) return;
+      try {
+        btn.releasePointerCapture(e.pointerId);
+      } catch {}
+      finishDrag();
+    });
+
+    btn.addEventListener("pointercancel", (e) => {
+      if (dragState.pointerId !== null && e.pointerId !== dragState.pointerId) return;
+      finishDrag();
+    });
+  } else {
+    btn.addEventListener("mousedown", (e) => {
+      if (e.button && e.button !== 0) return;
+      startDrag(e.clientX, e.clientY, "mouse");
+      const onMove = (ev) => moveDrag(ev.clientX, ev.clientY);
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        finishDrag();
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp, { once: true });
+    });
+
+    btn.addEventListener(
+      "touchstart",
+      (e) => {
+        if (e.touches.length !== 1) return;
+        const t = e.touches[0];
+        startDrag(t.clientX, t.clientY, "touch");
+        const onMove = (ev) => {
+          const tt = ev.touches[0];
+          if (!tt) return;
+          moveDrag(tt.clientX, tt.clientY);
+          ev.preventDefault();
+        };
+        const onEnd = () => {
+          window.removeEventListener("touchmove", onMove);
+          finishDrag();
+        };
+        window.addEventListener("touchmove", onMove, { passive: false });
+        window.addEventListener("touchend", onEnd, { once: true });
+        window.addEventListener("touchcancel", onEnd, { once: true });
+      },
+      { passive: true }
+    );
+  }
 
   btn.onclick = () => {
     if (ignoreClick) return;
@@ -798,7 +863,8 @@
     categories.forEach((cat0) => {
       const cat = norm(cat0);
       let currentWord = getSuggestion(letter, cat);
-      setSuggestion(cat, currentWord);
+      const isEmptySuggestion = norm(currentWord) === "SEM RESPOSTA";
+      setSuggestion(cat, isEmptySuggestion ? "" : currentWord);
 
       const item = document.createElement("div");
       item.className = "sh-item";
@@ -819,7 +885,8 @@
       item.querySelector(".next").onclick = () => {
         currentWord = getSuggestion(letter, cat);
         item.querySelector(".sh-word").innerText = currentWord;
-        setSuggestion(cat, currentWord);
+        const emptyNext = norm(currentWord) === "SEM RESPOSTA";
+        setSuggestion(cat, emptyNext ? "" : currentWord);
       };
 
       content.appendChild(item);
