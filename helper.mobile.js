@@ -208,16 +208,16 @@
 
   function addValidAnswersToDictionary() {
     const letter = getCurrentLetter();
-    if (!letter) return 0;
+    if (!letter) return [];
 
     const topicRaw = getCurrentTopic();
-    if (!topicRaw) return 0;
+    if (!topicRaw) return [];
     const topic = resolveTopicKey(topicRaw);
 
     const answerBlocks = document.querySelectorAll("div.validate.answer, .validate.answer");
     const blocks = answerBlocks.length ? answerBlocks : document.querySelectorAll("label, div");
 
-    let addedCount = 0;
+    const addedWords = [];
 
     blocks.forEach((block) => {
       const statusText = block
@@ -236,16 +236,16 @@
 
       if (!userDictionary[letter][topic].includes(word)) {
         userDictionary[letter][topic].push(word);
-        addedCount += 1;
+        addedWords.push(word);
       }
     });
 
-    if (addedCount > 0) {
+    if (addedWords.length > 0) {
       saveDictionary(userDictionary);
       dictionary = mergeDictionary(userDictionary, repoDictionary);
     }
 
-    return addedCount;
+    return addedWords;
   }
 
   function waitForValidationAndAdd(onDone) {
@@ -259,7 +259,7 @@
 
       if (hasValidated || Date.now() - startedAt > 3000) {
         clearInterval(timer);
-        const added = addValidAnswersToDictionary() || 0;
+        const added = addValidAnswersToDictionary() || [];
         onDone(added);
       }
     }, 200);
@@ -1063,8 +1063,6 @@
   // Avaliar + adicionar (mantive simples aqui: só aparece se tiver botão AVALIAR)
   // Você pode plugar sua lógica completa de "validado" depois, se quiser.
   // ======================
-  let lastValidationKey = "";
-  let lastValidationStatus = "";
 
   function renderActions() {
     actions.innerHTML = "";
@@ -1077,23 +1075,27 @@
     actions.appendChild(fillBtn);
 
     if (evalBtn) {
-      const letter = getCurrentLetter();
-      const topic = getCurrentTopic();
-      const validationKey = `${letter || ""}::${topic || ""}`;
-
-      if (validationKey !== lastValidationKey) {
-        lastValidationKey = validationKey;
-        lastValidationStatus = "";
+      if (!evalBtn.dataset.shAutoAdd) {
+        evalBtn.dataset.shAutoAdd = "1";
+        evalBtn.addEventListener("click", () => {
+          waitForValidationAndAdd((added) => {
+            if (added && added.length) {
+              const list = added.slice(0, 5).join(", ");
+              const suffix = added.length > 5 ? "..." : "";
+              showToast(`Salvo: ${list}${suffix}`);
+            } else {
+              showToast("Nada para adicionar");
+            }
+          });
+        });
       }
+    }
 
       const addBtn = document.createElement("button");
       addBtn.className = "sh-actionbtn primary";
-      addBtn.textContent = lastValidationStatus || "AVALIAR E ADICIONAR";
-      if (lastValidationStatus) addBtn.disabled = true;
       addBtn.onclick = () => {
         evalBtn.click();
         waitForValidationAndAdd((added) => {
-          lastValidationStatus = added > 0 ? "ADICIONADO" : "JA ADICIONADO";
           showToast(added > 0 ? `Adicionado: ${added}` : "Nada para adicionar");
           render(true);
         });
