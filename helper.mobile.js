@@ -265,7 +265,7 @@
   // >>> CONFIG: abre nova guia
   // Ajuste este caminho para onde você hospedar a página config:
   // Ex: https://seusite.com/config.html
-  const CONFIG_URL = "config.html";
+  const CONFIG_URL = "https://carlos79209.github.io/Stopts-cheat/config.html";
   goConfig.onclick = () => {
     window.open(CONFIG_URL, "_blank");
   };
