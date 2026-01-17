@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stopots Helper - Configuração</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0f0f1a;color:#fff}
+    header{padding:16px;background:#312b99;position:sticky;top:0}
+    h1{font-size:16px;margin:0}
+    main{padding:16px;max-width:980px;margin:0 auto}
+    .card{background:#1a1a2d;border-radius:16px;padding:14px;margin-bottom:12px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    textarea,input,select{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#0f0f1a;color:#fff;padding:10px}
+    button{border:none;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer}
+    .primary{background:#61f7c4;color:#1d1d1d}
+    .danger{background:#ff8995;color:#fff}
+    .ghost{background:rgba(255,255,255,.14);color:#fff}
+    label{font-size:12px;opacity:.9}
+    .small{font-size:12px;opacity:.8;line-height:1.35}
+    .grid{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;margin-left:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Stopots Helper <span class="pill">Configuração</span></h1>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="row">
+        <button class="primary" id="btnExport">Exportar dicionário</button>
+        <button class="ghost" id="btnImportMerge">Importar (mesclar)</button>
+        <button class="danger" id="btnReset">Resetar dicionário</button>
+      </div>
+      <p class="small">
+        Importar (mesclar) <b>não apaga</b> o anterior: só adiciona letras/categorias/palavras que não existirem.
+      </p>
+      <textarea id="jsonArea" rows="10" placeholder="Cole aqui um JSON de dicionário..."></textarea>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14px;margin:0 0 10px 0;">Adicionar palavra manualmente</h2>
+      <div class="grid">
+        <div>
+          <label>Letra</label>
+          <input id="inpLetter" placeholder="Ex: A" maxlength="1" />
+        </div>
+        <div>
+          <label>Categoria</label>
+          <input id="inpCategory" placeholder="Ex: PROFISSÃO" />
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Palavra</label>
+        <input id="inpWord" placeholder="Ex: ADVOGADO" />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="primary" id="btnAdd">Adicionar</button>
+        <button class="ghost" id="btnReload">Recarregar</button>
+      </div>
+      <p class="small" id="status"></p>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:14px;margin:0 0 10px 0;">Prévia rápida</h2>
+      <p class="small" id="preview"></p>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+</body>
+</html>
