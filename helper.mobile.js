@@ -1091,25 +1091,6 @@
       }
     }
 
-      const addBtn = document.createElement("button");
-      addBtn.className = "sh-actionbtn primary";
-      addBtn.onclick = () => {
-        evalBtn.click();
-        waitForValidationAndAdd((added) => {
-          showToast(added > 0 ? `Adicionado: ${added}` : "Nada para adicionar");
-          render(true);
-        });
-        addBtn.disabled = true;
-      };
-      actions.appendChild(addBtn);
-
-      const b = document.createElement("button");
-      b.className = "sh-actionbtn primary";
-      b.textContent = "AVALIAR (usar botão do site)";
-      b.onclick = () => evalBtn.click();
-      actions.appendChild(b);
-    }
-
     const reloadDict = document.createElement("button");
     reloadDict.className = "sh-actionbtn ghost";
     reloadDict.textContent = "Recarregar dicionário";
