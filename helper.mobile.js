@@ -919,12 +919,13 @@
     }
   }
 
-  function showPanel() {
+  function showPanel(forceMode = null) {
     menu.style.display = "none";
     panel.style.display = "block";
     lockBodyScroll(true);
     btn.style.display = "none";
     if (dictionariesReady) dictionariesReady.then(() => render(true));
+    if (forceMode) lastPanelMode = forceMode;
     const savedPanelPos = loadPanelPosition();
     if (savedPanelPos) {
       applyPanelPosition(savedPanelPos);
@@ -1058,7 +1059,7 @@
     const panelOpen = panel.style.display === "block";
 
     if (!menuOpen && !panelOpen) {
-      showMenu();
+      showPanel();
     } else {
       menu.style.display = "none";
       panel.style.display = "none";
@@ -1075,7 +1076,7 @@
 
   backMenu.onclick = showMenu;
 
-  goPlay.onclick = showPanel;
+  goPlay.onclick = () => showPanel("suggestions");
 
   setKeyBtn.onclick = () => {
     const current = localStorage.getItem(LS_KEY_API) || "";
