@@ -851,8 +851,8 @@
     panel.style.top = `${pos.y}px`;
   }
 
-  function positionPanelNearButton() {
-    const btnRect = btn.getBoundingClientRect();
+  function positionPanelNearButton(anchorRect = null) {
+    const btnRect = anchorRect || btn.getBoundingClientRect();
     const panelRect = panel.getBoundingClientRect();
     const x = btnRect.left - Math.max(0, panelRect.width - btnRect.width);
     const y = btnRect.top - panelRect.height - 12;
@@ -923,17 +923,18 @@
     menu.style.display = "none";
     panel.style.display = "block";
     lockBodyScroll(true);
+    const anchorRect = btn.getBoundingClientRect();
     btn.style.display = "none";
     if (dictionariesReady) dictionariesReady.then(() => render(true));
     if (forceMode) lastPanelMode = forceMode;
     if (forcePosition) {
-      positionPanelNearButton();
+      positionPanelNearButton(anchorRect);
     } else {
       const savedPanelPos = loadPanelPosition();
       if (savedPanelPos) {
         applyPanelPosition(savedPanelPos);
       } else {
-        positionPanelNearButton();
+        positionPanelNearButton(anchorRect);
       }
     }
     if (lastPanelMode === "config") {
