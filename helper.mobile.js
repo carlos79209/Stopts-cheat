@@ -308,7 +308,7 @@
   function requestAiSuggestions(letter, topics) {
     return fetchOpenRouterSuggestions(letter, topics).catch((err) => {
       if (err && err.message && err.message.includes("Missing OpenRouter API key")) {
-        alert("Defina sua OpenRouter API Key em Configuracoes antes de usar.");
+        alert("Defina sua OpenRouter API Key no menu do helper antes de usar.");
       }
       return {};
     });
@@ -420,6 +420,7 @@
       <div class="sh-menu-title">Stopots Helper</div>
       <button class="sh-menu-btn" id="sh-go-play">Jogar</button>
       <button class="sh-menu-btn" id="sh-go-config">Configurar dicionário</button>
+      <button class="sh-menu-btn" id="sh-set-key">API Key</button>
       <button class="sh-menu-btn sh-menu-close" id="sh-menu-close">Fechar</button>
     </div>
 
@@ -571,6 +572,7 @@
 
   const goPlay = document.getElementById("sh-go-play");
   const goConfig = document.getElementById("sh-go-config");
+  const setKeyBtn = document.getElementById("sh-set-key");
   const closeMenu = document.getElementById("sh-menu-close");
   const backMenu = document.getElementById("sh-back-menu");
 
@@ -769,6 +771,14 @@
   backMenu.onclick = showMenu;
 
   goPlay.onclick = showPanel;
+
+  setKeyBtn.onclick = () => {
+    const current = localStorage.getItem(LS_KEY_API) || "";
+    const key = prompt("Cole sua OpenRouter API Key:", current || "");
+    if (key === null) return;
+    localStorage.setItem(LS_KEY_API, key.trim());
+    showToast("API Key salva");
+  };
 
   document.addEventListener("pointerdown", (e) => {
     if (overlay.contains(e.target)) return;
