@@ -270,6 +270,14 @@
     return btns.find((b) => norm(b.innerText) === "AVALIAR");
   }
 
+  function getPhaseKey() {
+    const hasInputs = document.querySelector("input, textarea");
+    const evalBtn = findEvaluateButton();
+    if (evalBtn && !hasInputs) return "validation";
+    if (hasInputs) return "answers";
+    return "other";
+  }
+
   function getInputCandidates() {
     return [...document.querySelectorAll("input, textarea")].filter((el) => {
       const type = (el.getAttribute("type") || "").toLowerCase();
@@ -1046,7 +1054,8 @@
   // ======================
   let lastSignature = "";
   function computeSignature(letter, categories) {
-    return `${letter || ""}::${categories.join("|")}`;
+    const phase = getPhaseKey();
+    return `${phase}::${letter || ""}::${categories.join("|")}`;
   }
 
   function renderSuggestions(letter, categories) {
