@@ -5,14 +5,106 @@
   // STORAGE
   // ======================
   const LS_KEY = "stopots_dictionary";
+  const LS_KEY_API = "openrouterApiKey";
+  const LS_KEY_POS = "stopots_helper_pos";
   const loadDictionary = () => JSON.parse(localStorage.getItem(LS_KEY) || "{}");
   const saveDictionary = (dict) => localStorage.setItem(LS_KEY, JSON.stringify(dict));
-  let dictionary = loadDictionary();
+  let userDictionary = {};
+  let repoDictionary = {};
+  let dictionary = {};
+  let dictionariesReady = null;
+
+  function mergeDictionary(userDict, baseDict) {
+    const result = JSON.parse(JSON.stringify(baseDict || {}));
+
+    for (const letter in (userDict || {})) {
+      if (!result[letter]) result[letter] = {};
+      for (const topic in (userDict[letter] || {})) {
+        if (!result[letter][topic]) {
+          result[letter][topic] = userDict[letter][topic];
+        } else {
+          result[letter][topic] = mergeArray(result[letter][topic], userDict[letter][topic]);
+        }
+      }
+    }
+    return result;
+  }
+
+  function mergeArray(a, b) {
+    return a.concat(b.filter((item) => !a.includes(item)));
+  }
+
+  function getHelperBaseUrl() {
+    const current = document.currentScript?.src;
+    const fallback = document.querySelector('script[src*="helper.mobile.js"]')?.src;
+    const src = current || fallback;
+    if (!src) return "";
+    const url = new URL(src, location.href);
+    url.search = "";
+    url.hash = "";
+    url.pathname = url.pathname.replace(/\/[^\/]*$/, "");
+    return url.toString().replace(/\/$/, "");
+  }
+
+  function loadRepoDictionary() {
+    if (window.repoDictionary && typeof window.repoDictionary === "object") {
+      return Promise.resolve(window.repoDictionary);
+    }
+    const base = getHelperBaseUrl();
+    if (!base) return Promise.resolve({});
+
+    return new Promise((resolve) => {
+      const s = document.createElement("script");
+      s.src = `${base}/background.js?v=${Date.now()}`;
+      s.onload = () => resolve(window.repoDictionary || {});
+      s.onerror = () => resolve({});
+      document.head.appendChild(s);
+    });
+  }
+
+  function loadAllDictionaries() {
+    return loadRepoDictionary().then((repo) => {
+      repoDictionary = repo || {};
+      userDictionary = loadDictionary();
+      dictionary = mergeDictionary(userDictionary, repoDictionary);
+    });
+  }
+
+  function refreshDictionary() {
+    dictionariesReady = loadAllDictionaries();
+    return dictionariesReady;
+  }
+
+  dictionariesReady = loadAllDictionaries();
+
+  function loadHelperPosition() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_KEY_POS) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function saveHelperPosition(pos) {
+    localStorage.setItem(LS_KEY_POS, JSON.stringify(pos));
+  }
 
   // ======================
   // UTILS
   // ======================
   const norm = (s) => (s || "").toString().trim().toUpperCase().replace(/\s+/g, " ");
+
+  const topicAliases = {
+    "FRUTA, LEGUME OU VERDURA": "FLV",
+    "CIDADE, ESTADO OU PAIS": "CEP",
+    "JORNAL, LIVRO OU REVISTA": "JLR",
+    "PERSONAGEM DE DESENHO ANIMADO": "PDA",
+    "PARTE DO CORPO HUMANO": "PCH",
+  };
+
+  function resolveTopicKey(topic) {
+    return topicAliases[topic] || topic;
+  }
 
   function getCurrentLetter() {
     const spans = [...document.querySelectorAll("span,div,strong")];
@@ -33,7 +125,8 @@
   }
 
   function getSuggestion(letter, category) {
-    const list = dictionary?.[letter]?.[category];
+    const key = resolveTopicKey(category);
+    const list = dictionary?.[letter]?.[key];
     if (!list || !list.length) return "Sem resposta";
     return list[Math.floor(Math.random() * list.length)];
   }
@@ -120,6 +213,12 @@
   }
 
   function fillAnswers() {
+    const letter = getCurrentLetter();
+    if (!letter) {
+      showToast("Nao encontrei a letra atual.");
+      return;
+    }
+
     if (!currentCategories.length) {
       showToast("Nao encontrei categorias para preencher.");
       return;
@@ -128,26 +227,187 @@
     const map = buildCategoryInputMap(currentCategories);
     let filled = 0;
     let missing = 0;
+    const missingTopics = [];
+    const inputByTopic = new Map();
 
     currentCategories.forEach((cat0) => {
       const key = norm(cat0);
       const word = suggestionsMap[key];
       const input = map.get(key);
-      if (input && word) {
+      if (input && word && word !== "Sem resposta") {
         input.value = word;
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new Event("change", { bubbles: true }));
         filled += 1;
       } else {
         missing += 1;
+        if (input) {
+          const resolved = resolveTopicKey(key);
+          if (!missingTopics.includes(resolved)) {
+            missingTopics.push(resolved);
+            inputByTopic.set(resolved, input);
+          }
+        }
       }
     });
 
-    if (filled) {
-      showToast(`Preenchido: ${filled} (faltando: ${missing})`);
-    } else {
+    if (!filled && !missingTopics.length) {
       showToast("Nenhum campo compativel foi encontrado.");
+      return;
     }
+
+    const filledBeforeAi = filled;
+
+    if (missingTopics.length) {
+      requestAiSuggestions(letter, missingTopics)
+        .then((suggestions) => {
+          if (!suggestions || !Object.keys(suggestions).length) {
+            showToast(`Preenchido: ${filled} (faltando: ${missing})`);
+            return;
+          }
+
+          let added = 0;
+          missingTopics.forEach((topic) => {
+            const suggestion = suggestions[topic];
+            if (!suggestion) return;
+            if (suggestion[0] !== letter) return;
+
+            userDictionary[letter] ??= {};
+            userDictionary[letter][topic] ??= [];
+            if (!userDictionary[letter][topic].includes(suggestion)) {
+              userDictionary[letter][topic].push(suggestion);
+              added += 1;
+            }
+
+            const input = inputByTopic.get(topic);
+            if (input && input.value.trim().length === 0) {
+              input.value = suggestion;
+              input.dispatchEvent(new Event("input", { bubbles: true }));
+              input.dispatchEvent(new Event("change", { bubbles: true }));
+              filled += 1;
+              setSuggestion(topic, suggestion);
+            }
+          });
+
+          if (added > 0) {
+            saveDictionary(userDictionary);
+            dictionary = mergeDictionary(userDictionary, repoDictionary);
+          }
+          const filledByAi = filled - filledBeforeAi;
+          const missingAfter = Math.max(0, missingTopics.length - filledByAi);
+          showToast(`Preenchido: ${filled} (faltando: ${missingAfter})`);
+        })
+        .catch(() => {
+          showToast(`Preenchido: ${filled} (faltando: ${missing})`);
+        });
+    } else {
+      showToast(`Preenchido: ${filled} (faltando: ${missing})`);
+    }
+  }
+
+  function requestAiSuggestions(letter, topics) {
+    return fetchOpenRouterSuggestions(letter, topics).catch((err) => {
+      if (err && err.message && err.message.includes("Missing OpenRouter API key")) {
+        alert("Defina sua OpenRouter API Key em Configuracoes antes de usar.");
+      }
+      return {};
+    });
+  }
+
+  async function fetchOpenRouterSuggestions(letter, topics) {
+    const openrouterApiKey = localStorage.getItem(LS_KEY_API);
+    if (!openrouterApiKey) {
+      throw new Error("Missing OpenRouter API key");
+    }
+
+    const topicMap = {
+      FLV: "FRUTA, LEGUME OU VERDURA",
+      CEP: "CIDADE, ESTADO OU PAIS",
+      JLR: "JORNAL, LIVRO OU REVISTA",
+      PDA: "PERSONAGEM DE DESENHO ANIMADO",
+      PCH: "PARTE DO CORPO HUMANO",
+    };
+
+    const resolvedTopics = topics.map((topic) => topicMap[topic] || topic);
+
+    const prompt = [
+      "Return ONLY valid JSON with no extra text.",
+      "Use common everyday Brazilian Portuguese words.",
+      "Keys must be exactly the topic names provided.",
+      "Values must be a single short answer in Portuguese (string, not array) that starts with the letter.",
+      "Do NOT reuse any of the example words below.",
+      "Example format (do NOT reuse these words):",
+      "{",
+      '  "A": {',
+      '    "ANIMAL": "ANTA",',
+      '    "COR": "AZUL",',
+      '    "COMIDA": "ARROZ",',
+      '    "NOME": "ANA",',
+      '    "PAIS": "ALEMANHA"',
+      "  }",
+      "}",
+      `Letter: ${letter}`,
+      `Topics: ${JSON.stringify(resolvedTopics)}`,
+    ].join("\n");
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openrouterApiKey}`,
+        "HTTP-Referer": "https://stopots.com",
+        "X-Title": "Stopots Helper",
+      },
+      body: JSON.stringify({
+        model: "mistralai/devstral-2512:free",
+        temperature: 0.3,
+        messages: [
+          { role: "system", content: "You are a game helper." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter error: ${errorText}`);
+    }
+
+    const data = await response.json();
+    let content = data?.choices?.[0]?.message?.content || "{}";
+    content = content
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+
+    let parsed = {};
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      parsed = {};
+    }
+
+    const normalized = {};
+    const letterBucket = parsed && typeof parsed === "object" ? parsed[letter] : null;
+
+    topics.forEach((topic) => {
+      const resolved = topicMap[topic] || topic;
+      const value =
+        (letterBucket && (letterBucket[resolved] || letterBucket[topic])) ||
+        parsed[resolved] ||
+        parsed[topic];
+
+      if (typeof value === "string" && value.trim()) {
+        normalized[topic] = value.trim().toUpperCase();
+      }
+    });
+
+    if (!Object.keys(normalized).length) {
+      throw new Error(`Empty AI response: ${content}`);
+    }
+
+    return normalized;
   }
 
   // ======================
@@ -192,22 +452,25 @@
     }
 
     #sh-btn{
-      width:54px;height:54px;border-radius:999px;
+      width:48px;height:48px;border-radius:999px;
       background:#29d3b2; display:flex;align-items:center;justify-content:center;
-      font-size:24px; box-shadow:0 6px 16px rgba(0,0,0,.28);
+      font-size:22px; box-shadow:0 6px 14px rgba(0,0,0,.22);
       user-select:none;
+      opacity:.92;
+      cursor:grab;
     }
+    #sh-btn:active{ cursor:grabbing; }
 
     /* MENU */
     #sh-menu{
       display:none;
-      width:230px;
-      background:#312b99;
+      width:220px;
+      background:rgba(49,43,153,.95);
       border-radius:16px;
       padding:10px;
       margin-bottom:10px;
       color:#fff;
-      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      box-shadow:0 10px 20px rgba(0,0,0,.28);
     }
     .sh-menu-title{
       font-weight:800;
@@ -231,14 +494,14 @@
     /* PANEL */
     #sh-panel{
       display:none;
-      width:min(86vw, 320px);
+      width:min(82vw, 300px);
       max-height:min(70vh, 520px);
-      background:#312b99;
+      background:rgba(49,43,153,.95);
       border-radius:16px;
       padding:10px;
       margin-bottom:10px;
       color:#fff;
-      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      box-shadow:0 10px 20px rgba(0,0,0,.28);
 
       overflow:auto;
       -webkit-overflow-scrolling: touch;
@@ -259,9 +522,9 @@
     }
     .sh-topbtn.ghost{ background:rgba(255,255,255,.14); color:#fff; }
 
-    #sh-actions{ display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    #sh-actions{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
     .sh-actionbtn{
-      border:none;border-radius:12px;padding:8px 10px;
+      border:none;border-radius:12px;padding:7px 9px;
       font-size:12px;font-weight:900;cursor:pointer;
     }
     .sh-actionbtn.primary{ background:#61f7c4; color:#1d1d1d; }
@@ -315,6 +578,28 @@
   const toast = document.getElementById("sh-toast");
   const subtitle = document.getElementById("sh-subtitle");
 
+  function clampPosition(x, y) {
+    const pad = 8;
+    const size = 48;
+    const maxX = Math.max(pad, window.innerWidth - size - pad);
+    const maxY = Math.max(pad, window.innerHeight - size - pad);
+    return {
+      x: Math.min(Math.max(pad, x), maxX),
+      y: Math.min(Math.max(pad, y), maxY),
+    };
+  }
+
+  function applyPosition(pos) {
+    if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") return;
+    overlay.style.right = "auto";
+    overlay.style.bottom = "auto";
+    overlay.style.left = `${pos.x}px`;
+    overlay.style.top = `${pos.y}px`;
+  }
+
+  const savedPos = loadHelperPosition();
+  if (savedPos) applyPosition(savedPos);
+
   // Evita “scroll da página” interferindo com o painel
   function lockBodyScroll(lock) {
     document.documentElement.style.overscrollBehavior = lock ? "none" : "";
@@ -343,17 +628,68 @@
     menu.style.display = "none";
     panel.style.display = "block";
     lockBodyScroll(true);
+    if (dictionariesReady) dictionariesReady.then(() => render(true));
     render(); // atualiza ao abrir
   }
 
+  let ignoreClick = false;
+  const dragState = { active: false, moved: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
+
+  btn.addEventListener("pointerdown", (e) => {
+    if (e.button && e.button !== 0) return;
+    dragState.active = true;
+    dragState.moved = false;
+    dragState.startX = e.clientX;
+    dragState.startY = e.clientY;
+    const rect = btn.getBoundingClientRect();
+    dragState.startLeft = rect.left;
+    dragState.startTop = rect.top;
+    overlay.style.right = "auto";
+    overlay.style.bottom = "auto";
+    overlay.style.left = `${dragState.startLeft}px`;
+    overlay.style.top = `${dragState.startTop}px`;
+    btn.setPointerCapture(e.pointerId);
+  });
+
+  btn.addEventListener("pointermove", (e) => {
+    if (!dragState.active) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (!dragState.moved && Math.hypot(dx, dy) < 6) return;
+    dragState.moved = true;
+    const pos = clampPosition(dragState.startLeft + dx, dragState.startTop + dy);
+    overlay.style.left = `${pos.x}px`;
+    overlay.style.top = `${pos.y}px`;
+  });
+
+  function endDrag(e) {
+    if (!dragState.active) return;
+    dragState.active = false;
+    try {
+      btn.releasePointerCapture(e.pointerId);
+    } catch {}
+    const rect = btn.getBoundingClientRect();
+    const pos = clampPosition(rect.left, rect.top);
+    overlay.style.left = `${pos.x}px`;
+    overlay.style.top = `${pos.y}px`;
+    saveHelperPosition(pos);
+    if (dragState.moved) {
+      ignoreClick = true;
+      setTimeout(() => (ignoreClick = false), 0);
+    }
+  }
+
+  btn.addEventListener("pointerup", endDrag);
+  btn.addEventListener("pointercancel", endDrag);
+
   btn.onclick = () => {
+    if (ignoreClick) return;
     const menuOpen = menu.style.display === "block";
     const panelOpen = panel.style.display === "block";
 
     if (!menuOpen && !panelOpen) {
       showMenu();
     } else {
-      // fecha tudo
       menu.style.display = "none";
       panel.style.display = "none";
       lockBodyScroll(false);
@@ -368,6 +704,15 @@
   backMenu.onclick = showMenu;
 
   goPlay.onclick = showPanel;
+
+  document.addEventListener("pointerdown", (e) => {
+    if (overlay.contains(e.target)) return;
+    if (menu.style.display === "block" || panel.style.display === "block") {
+      menu.style.display = "none";
+      panel.style.display = "none";
+      lockBodyScroll(false);
+    }
+  });
 
   // >>> CONFIG: abre nova guia
   // Ajuste este caminho para onde você hospedar a página config:
@@ -421,9 +766,10 @@
     reloadDict.className = "sh-actionbtn ghost";
     reloadDict.textContent = "Recarregar dicionário";
     reloadDict.onclick = () => {
-      dictionary = loadDictionary();
-      showToast("📚 Dicionário recarregado");
-      render();
+      refreshDictionary().then(() => {
+        showToast("Dicionario recarregado");
+        render(true);
+      });
     };
     actions.appendChild(reloadDict);
   }
@@ -516,3 +862,7 @@
   // Inicial
   showMenu();
 })();
+
+
+
+

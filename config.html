@@ -96,6 +96,50 @@
       line-height:1.35;
       font-size:13px;
     }
+    .api-box{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius2);
+      padding:12px 14px;
+      box-shadow:var(--shadow);
+      margin-bottom:12px;
+    }
+    .api-title{
+      font-weight:900;
+      margin-bottom:8px;
+      color:#222;
+      font-size:13px;
+    }
+    .api-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .api-input{
+      flex:1;
+      min-width:220px;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-weight:700;
+      outline:none;
+    }
+    .api-btn{
+      border:none;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:900;
+      cursor:pointer;
+      background:var(--primary2);
+      color:#0b0b10;
+    }
+    .api-note{
+      margin-top:6px;
+      font-size:12px;
+      color:#666;
+    }
 
     /* ====== DICIONÁRIO (igual extensão: letras -> tópicos -> respostas) ====== */
     #dictionary{
@@ -296,6 +340,14 @@
   </header>
 
   <main>
+    <div class="api-box">
+      <div class="api-title">OpenRouter API Key (IA)</div>
+      <div class="api-row">
+        <input id="openrouterKey" class="api-input" placeholder="Cole sua OpenRouter API Key" />
+        <button id="saveKeyBtn" class="api-btn">Salvar</button>
+      </div>
+      <div class="api-note">Use para gerar sugestoes quando nao houver palavra no dicionario.</div>
+    </div>
     <div class="hint">
       • <b>Importar</b> agora <b>MESCLA</b> com seu dicionário atual (não apaga).<br/>
       • Tudo fica salvo no <b>localStorage</b> do navegador (celular).

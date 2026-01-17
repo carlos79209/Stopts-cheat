@@ -2,6 +2,7 @@ const dictionaryDiv = document.getElementById('dictionary');
 let dictionary = {};
 
 const LS_KEY = "stopots_dictionary";
+const LS_KEY_API = "openrouterApiKey";
 
 // ===== Storage helpers (mobile) =====
 function loadDictionary() {
@@ -11,10 +12,33 @@ function saveDictionary(dict) {
   localStorage.setItem(LS_KEY, JSON.stringify(dict));
 }
 
+function loadApiKey() {
+  return localStorage.getItem(LS_KEY_API) || "";
+}
+
+function saveApiKey(key) {
+  localStorage.setItem(LS_KEY_API, key);
+}
+
 // ===== Init =====
 dictionary = loadDictionary();
 processDictionary();
 handleModal();
+handleApiKey();
+
+function handleApiKey() {
+  const input = document.getElementById("openrouterKey");
+  const btn = document.getElementById("saveKeyBtn");
+  if (!input || !btn) return;
+
+  input.value = loadApiKey();
+
+  btn.onclick = () => {
+    saveApiKey((input.value || "").trim());
+    btn.innerText = "Salvo!";
+    setTimeout(() => (btn.innerText = "Salvar"), 1000);
+  };
+}
 
 // =======================
 // Render do dicionário (igual extensão)
