@@ -919,18 +919,22 @@
     }
   }
 
-  function showPanel(forceMode = null) {
+  function showPanel(forceMode = null, forcePosition = false) {
     menu.style.display = "none";
     panel.style.display = "block";
     lockBodyScroll(true);
     btn.style.display = "none";
     if (dictionariesReady) dictionariesReady.then(() => render(true));
     if (forceMode) lastPanelMode = forceMode;
-    const savedPanelPos = loadPanelPosition();
-    if (savedPanelPos) {
-      applyPanelPosition(savedPanelPos);
-    } else {
+    if (forcePosition) {
       positionPanelNearButton();
+    } else {
+      const savedPanelPos = loadPanelPosition();
+      if (savedPanelPos) {
+        applyPanelPosition(savedPanelPos);
+      } else {
+        positionPanelNearButton();
+      }
     }
     if (lastPanelMode === "config") {
       showConfigView();
@@ -1059,7 +1063,7 @@
     const panelOpen = panel.style.display === "block";
 
     if (!menuOpen && !panelOpen) {
-      showPanel();
+      showPanel(null, true);
     } else {
       menu.style.display = "none";
       panel.style.display = "none";
