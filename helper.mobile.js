@@ -7,6 +7,7 @@
   const LS_KEY = "stopots_dictionary";
   const LS_KEY_API = "openrouterApiKey";
   const LS_KEY_POS = "stopots_helper_pos";
+  const LS_KEY_PANEL_POS = "stopots_helper_panel_pos";
   const loadDictionary = () => JSON.parse(localStorage.getItem(LS_KEY) || "{}");
   const saveDictionary = (dict) => localStorage.setItem(LS_KEY, JSON.stringify(dict));
   let userDictionary = {};
@@ -87,6 +88,18 @@
 
   function saveHelperPosition(pos) {
     localStorage.setItem(LS_KEY_POS, JSON.stringify(pos));
+  }
+
+  function loadPanelPosition() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_KEY_PANEL_POS) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function savePanelPosition(pos) {
+    localStorage.setItem(LS_KEY_PANEL_POS, JSON.stringify(pos));
   }
 
   // ======================
@@ -656,12 +669,15 @@
     /* PANEL */
     #sh-panel{
       display:none;
+      position:fixed;
+      right:16px;
+      bottom:80px;
       width:min(82vw, 300px);
       max-height:min(70vh, 520px);
       background:rgba(49,43,153,.95);
       border-radius:16px;
       padding:10px;
-      margin-bottom:10px;
+      margin-bottom:0;
       color:#fff;
       box-shadow:0 10px 20px rgba(0,0,0,.28);
 
@@ -674,6 +690,8 @@
     #sh-header{
       display:flex;align-items:center;justify-content:space-between;
       margin-bottom:8px;
+      cursor:move;
+      user-select:none;
     }
     .sh-title{ font-weight:900; }
     .sh-sub{ font-size:12px; opacity:.85; margin-left:8px; }
@@ -792,6 +810,34 @@
   const savedPos = loadHelperPosition();
   if (savedPos) applyPosition(savedPos);
 
+  function clampPanelPosition(x, y) {
+    const pad = 8;
+    const rect = panel.getBoundingClientRect();
+    const maxX = Math.max(pad, window.innerWidth - rect.width - pad);
+    const maxY = Math.max(pad, window.innerHeight - rect.height - pad);
+    return {
+      x: Math.min(Math.max(pad, x), maxX),
+      y: Math.min(Math.max(pad, y), maxY),
+    };
+  }
+
+  function applyPanelPosition(pos) {
+    if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") return;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    panel.style.left = `${pos.x}px`;
+    panel.style.top = `${pos.y}px`;
+  }
+
+  function positionPanelNearButton() {
+    const btnRect = btn.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const x = btnRect.left - Math.max(0, panelRect.width - btnRect.width);
+    const y = btnRect.top - panelRect.height - 12;
+    const pos = clampPanelPosition(x, y);
+    applyPanelPosition(pos);
+  }
+
   // Evita “scroll da página” interferindo com o painel
   function lockBodyScroll(lock) {
     document.documentElement.style.overscrollBehavior = lock ? "none" : "";
@@ -814,13 +860,21 @@
     panel.style.display = "none";
     menu.style.display = "block";
     lockBodyScroll(false);
+    btn.style.display = "flex";
   }
 
   function showPanel() {
     menu.style.display = "none";
     panel.style.display = "block";
     lockBodyScroll(true);
+    btn.style.display = "none";
     if (dictionariesReady) dictionariesReady.then(() => render(true));
+    const savedPanelPos = loadPanelPosition();
+    if (savedPanelPos) {
+      applyPanelPosition(savedPanelPos);
+    } else {
+      positionPanelNearButton();
+    }
     showSuggestionsView();
   }
 
@@ -949,12 +1003,14 @@
       menu.style.display = "none";
       panel.style.display = "none";
       lockBodyScroll(false);
+      btn.style.display = "flex";
     }
   };
 
   closeMenu.onclick = () => {
     menu.style.display = "none";
     lockBodyScroll(false);
+    btn.style.display = "flex";
   };
 
   backMenu.onclick = showMenu;
@@ -1008,6 +1064,7 @@
       menu.style.display = "none";
       panel.style.display = "none";
       lockBodyScroll(false);
+      btn.style.display = "flex";
     }
   });
 
@@ -1031,6 +1088,93 @@
     input.dataset.shValue = input.value;
   });
 
+  const header = document.getElementById("sh-header");
+  if (header) {
+    let panelDragActive = false;
+    let panelStartX = 0;
+    let panelStartY = 0;
+    let panelStartLeft = 0;
+    let panelStartTop = 0;
+
+    const startPanelDrag = (clientX, clientY) => {
+      panelDragActive = true;
+      panelStartX = clientX;
+      panelStartY = clientY;
+      const rect = panel.getBoundingClientRect();
+      panelStartLeft = rect.left;
+      panelStartTop = rect.top;
+    };
+
+    const movePanelDrag = (clientX, clientY) => {
+      if (!panelDragActive) return;
+      const dx = clientX - panelStartX;
+      const dy = clientY - panelStartY;
+      const pos = clampPanelPosition(panelStartLeft + dx, panelStartTop + dy);
+      applyPanelPosition(pos);
+    };
+
+    const endPanelDrag = () => {
+      if (!panelDragActive) return;
+      panelDragActive = false;
+      const rect = panel.getBoundingClientRect();
+      const pos = clampPanelPosition(rect.left, rect.top);
+      applyPanelPosition(pos);
+      savePanelPosition(pos);
+    };
+
+    if (window.PointerEvent) {
+      header.addEventListener("pointerdown", (e) => {
+        if (e.button && e.button !== 0) return;
+        startPanelDrag(e.clientX, e.clientY);
+        header.setPointerCapture(e.pointerId);
+      });
+      header.addEventListener("pointermove", (e) => {
+        movePanelDrag(e.clientX, e.clientY);
+      });
+      header.addEventListener("pointerup", (e) => {
+        try {
+          header.releasePointerCapture(e.pointerId);
+        } catch {}
+        endPanelDrag();
+      });
+      header.addEventListener("pointercancel", endPanelDrag);
+    } else {
+      header.addEventListener("mousedown", (e) => {
+        if (e.button && e.button !== 0) return;
+        startPanelDrag(e.clientX, e.clientY);
+        const onMove = (ev) => movePanelDrag(ev.clientX, ev.clientY);
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          endPanelDrag();
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp, { once: true });
+      });
+      header.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length !== 1) return;
+          const t = e.touches[0];
+          startPanelDrag(t.clientX, t.clientY);
+          const onMove = (ev) => {
+            const tt = ev.touches[0];
+            if (!tt) return;
+            movePanelDrag(tt.clientX, tt.clientY);
+            ev.preventDefault();
+          };
+          const onEnd = () => {
+            window.removeEventListener("touchmove", onMove);
+            endPanelDrag();
+          };
+          window.addEventListener("touchmove", onMove, { passive: false });
+          window.addEventListener("touchend", onEnd, { once: true });
+          window.addEventListener("touchcancel", onEnd, { once: true });
+        },
+        { passive: true }
+      );
+    }
+  }
+
   // >>> CONFIG: abre nova guia
   // Ajuste este caminho para onde você hospedar a página config:
   // Ex: https://seusite.com/config.html
@@ -1038,6 +1182,13 @@
     menu.style.display = "none";
     panel.style.display = "block";
     lockBodyScroll(true);
+    btn.style.display = "none";
+    const savedPanelPos = loadPanelPosition();
+    if (savedPanelPos) {
+      applyPanelPosition(savedPanelPos);
+    } else {
+      positionPanelNearButton();
+    }
     showConfigView();
   };
 
@@ -1059,6 +1210,43 @@
     }, 3500);
   }
 
+  function handleEvaluateClick() {
+    waitForValidationAndAdd((added) => {
+      const revealPanel = panel.style.display !== "block";
+      if (revealPanel) {
+        menu.style.display = "none";
+        panel.style.display = "block";
+        lockBodyScroll(true);
+        showSuggestionsView();
+      }
+
+      if (added && added.length) {
+        const list = added.slice(0, 5).join(", ");
+        const suffix = added.length > 5 ? "..." : "";
+        showToast(`Salvo: ${list}${suffix}`);
+      } else {
+        showToast("Nada para adicionar");
+      }
+
+      if (revealPanel) {
+        setTimeout(() => {
+          panel.style.display = "none";
+          lockBodyScroll(false);
+        }, 2500);
+      }
+    });
+  }
+
+  function bindEvaluateButtons() {
+    const btns = [...document.querySelectorAll("button")];
+    btns.forEach((btn) => {
+      if (btn.dataset.shAutoAdd) return;
+      if (norm(btn.innerText) !== "AVALIAR") return;
+      btn.dataset.shAutoAdd = "1";
+      btn.addEventListener("click", handleEvaluateClick);
+    });
+  }
+
   // ======================
   // Avaliar + adicionar (mantive simples aqui: só aparece se tiver botão AVALIAR)
   // Você pode plugar sua lógica completa de "validado" depois, se quiser.
@@ -1075,20 +1263,7 @@
     actions.appendChild(fillBtn);
 
     if (evalBtn) {
-      if (!evalBtn.dataset.shAutoAdd) {
-        evalBtn.dataset.shAutoAdd = "1";
-        evalBtn.addEventListener("click", () => {
-          waitForValidationAndAdd((added) => {
-            if (added && added.length) {
-              const list = added.slice(0, 5).join(", ");
-              const suffix = added.length > 5 ? "..." : "";
-              showToast(`Salvo: ${list}${suffix}`);
-            } else {
-              showToast("Nada para adicionar");
-            }
-          });
-        });
-      }
+      bindEvaluateButtons();
     }
 
     const reloadDict = document.createElement("button");
@@ -1185,9 +1360,12 @@
   // MutationObserver throttled
   let t = null;
   const observer = new MutationObserver(() => {
-    if (panel.style.display !== "block") return;
     clearTimeout(t);
-    t = setTimeout(() => render(false), 200);
+    t = setTimeout(() => {
+      bindEvaluateButtons();
+      if (panel.style.display !== "block") return;
+      render(false);
+    }, 200);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
