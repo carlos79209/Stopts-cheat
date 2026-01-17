@@ -626,7 +626,7 @@
       <div id="sh-toast" style="display:none;"></div>
     </div>
 
-    <div id="sh-btn" title="Stopots Helper">📘</div>
+    <div id="sh-btn" title="Stopots Helper"></div>
   `;
   document.body.appendChild(overlay);
 
@@ -641,6 +641,10 @@
     #sh-btn{
       width:48px;height:48px;border-radius:999px;
       background:#29d3b2; display:flex;align-items:center;justify-content:center;
+      background-image:url('icon.png');
+      background-size:70% 70%;
+      background-repeat:no-repeat;
+      background-position:center;
       font-size:22px; box-shadow:0 6px 14px rgba(0,0,0,.22);
       user-select:none;
       opacity:.92;
@@ -1527,6 +1531,8 @@
   // Inicial
   showMenu();
 })();
+
+
 
 
 
