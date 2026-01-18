@@ -633,6 +633,7 @@
         </div>
         <textarea id="sh-config-text" placeholder="Cole o dicionario aqui"></textarea>
       </div>
+      <div id="sh-validation" style="display:none;"></div>
       <div id="sh-toast" style="display:none;"></div>
     </div>
 
@@ -764,6 +765,20 @@
     .sh-config-row{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
     #sh-config-text{ width:100%; min-height:120px; border-radius:12px; border:1px solid rgba(255,255,255,.2); padding:10px; background:rgba(0,0,0,.15); color:#fff; font-size:12px; outline:none; }
 
+    #sh-validation{ margin-bottom:8px; }
+    .sh-validation-header{ font-size:12px; opacity:.85; margin-bottom:6px; }
+    .sh-validation-list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
+    .sh-validation-item{
+      background:rgba(255,255,255,.14);
+      color:#fff;
+      border-radius:10px;
+      padding:8px;
+      text-align:center;
+      font-size:13px;
+      font-weight:800;
+    }
+    .sh-validation-empty{ font-size:12px; opacity:.85; line-height:1.35; }
+
     #sh-toast{
       margin-top:8px;
       background:rgba(0,0,0,.22);
@@ -801,6 +816,7 @@
   const configText = document.getElementById("sh-config-text");
   const exportBtn = document.getElementById("sh-export");
   const importBtn = document.getElementById("sh-import");
+  const validationView = document.getElementById("sh-validation");
 
   if (btn) {
     btn.style.backgroundColor = "#000000";
@@ -808,12 +824,14 @@
 
   let panelMode = "suggestions";
   let lastPanelMode = "suggestions";
+  let lastValidationResult = null;
 
   function showSuggestionsView() {
     panelMode = "suggestions";
     lastPanelMode = "suggestions";
     if (titleEl) titleEl.textContent = "Sugestoes";
     if (configView) configView.style.display = "none";
+    if (validationView) validationView.style.display = "none";
     actions.style.display = "flex";
     content.style.display = "block";
     render(true);
@@ -827,6 +845,66 @@
     actions.style.display = "none";
     content.style.display = "none";
     if (configView) configView.style.display = "block";
+    if (validationView) validationView.style.display = "none";
+  }
+
+  function renderValidation(result) {
+    if (!validationView) return;
+    validationView.innerHTML = "";
+    const data = result || lastValidationResult;
+
+    if (!data) {
+      const empty = document.createElement("div");
+      empty.className = "sh-validation-empty";
+      empty.textContent = "Nenhuma validacao recente.";
+      validationView.appendChild(empty);
+      return;
+    }
+
+    const metaParts = [];
+    if (data.letter) metaParts.push(`Letra: ${data.letter}`);
+    if (data.topic) metaParts.push(`Tema: ${data.topic}`);
+    if (metaParts.length) {
+      const meta = document.createElement("div");
+      meta.className = "sh-validation-header";
+      meta.textContent = metaParts.join(" | ");
+      validationView.appendChild(meta);
+    }
+
+    if (!data.added || data.added.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "sh-validation-empty";
+      empty.textContent = "Nenhuma palavra adicionada.";
+      validationView.appendChild(empty);
+      return;
+    }
+
+    const count = document.createElement("div");
+    count.className = "sh-validation-header";
+    count.textContent = `Adicionadas: ${data.added.length}`;
+    validationView.appendChild(count);
+
+    const list = document.createElement("ul");
+    list.className = "sh-validation-list";
+    data.added.forEach((word) => {
+      const item = document.createElement("li");
+      item.className = "sh-validation-item";
+      item.textContent = word;
+      list.appendChild(item);
+    });
+    validationView.appendChild(list);
+  }
+
+  function showValidationView(result = null) {
+    panelMode = "validation";
+    lastPanelMode = "validation";
+    if (titleEl) titleEl.textContent = "Validacao";
+    subtitle.textContent = "";
+    actions.style.display = "none";
+    content.style.display = "none";
+    if (configView) configView.style.display = "none";
+    if (validationView) validationView.style.display = "block";
+    renderValidation(result);
   }
 
   function clampPosition(x, y) {
@@ -958,6 +1036,8 @@
     }
     if (lastPanelMode === "config") {
       showConfigView();
+    } else if (lastPanelMode === "validation") {
+      showValidationView();
     } else {
       showSuggestionsView();
     }
@@ -1386,19 +1466,16 @@
 
   function handleEvaluateClick() {
     waitForValidationAndAdd((added) => {
-      const revealPanel = panel.style.display !== "block";
-      if (revealPanel) {
-        menu.style.display = "none";
-        panel.style.display = "block";
-        lockBodyScroll(true);
-        showSuggestionsView();
-      }
+      lastValidationResult = {
+        added,
+        letter: getCurrentLetter(),
+        topic: getCurrentTopic(),
+      };
 
-      if (revealPanel) {
-        setTimeout(() => {
-          panel.style.display = "none";
-          lockBodyScroll(false);
-        }, 2500);
+      if (panel.style.display !== "block") {
+        showPanel("validation", true);
+      } else {
+        showValidationView(lastValidationResult);
       }
     });
   }
