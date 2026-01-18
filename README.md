@@ -1,8 +1,8 @@
 # Stopots Helper
 
-Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico
+Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico com IA,
 e validacao para o jogo Stopots. Funciona via bookmarklet (mobile/desktop) e
-nao requer extensao.
+nao requer extensao, nem precisa baixar nada.
 <img width="1890" height="1417" alt="Untitled-1" src="https://github.com/user-attachments/assets/ce6c3a0c-c630-4713-b013-d7e9f49f19ba" />
 
 
