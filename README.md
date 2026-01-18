@@ -11,6 +11,7 @@ nao requer extensao, nem precisa baixar nada.
 
 
 ## Como usar (passo a passo)
+tutorial completo em video: https://youtu.be/cHtiDXX5qVY
 
 1) Acesse `https://carlos79209.github.io/Stopts-cheat/` e clique em "Copiar bookmarklet".
 2) No navegador, crie/edite um favorito e cole o bookmarklet no campo URL.
