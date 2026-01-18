@@ -9,12 +9,19 @@
   const LS_KEY_POS = "stopots_helper_pos";
   const LS_KEY_PANEL_POS = "stopots_helper_panel_pos";
   const LS_KEY_MENU_POS = "stopots_helper_menu_pos";
+  const LS_KEY_AI_ENABLED = "stopots_ai_enabled";
   const loadDictionary = () => JSON.parse(localStorage.getItem(LS_KEY) || "{}");
   const saveDictionary = (dict) => localStorage.setItem(LS_KEY, JSON.stringify(dict));
   let userDictionary = {};
   let repoDictionary = {};
   let dictionary = {};
   let dictionariesReady = null;
+  const isAiEnabled = () => {
+    const value = localStorage.getItem(LS_KEY_AI_ENABLED);
+    return value === null ? true : value === "1";
+  };
+  const setAiEnabled = (enabled) =>
+    localStorage.setItem(LS_KEY_AI_ENABLED, enabled ? "1" : "0");
 
   function mergeDictionary(userDict, baseDict) {
     const result = JSON.parse(JSON.stringify(baseDict || {}));
@@ -440,7 +447,9 @@
 
     const filledBeforeAi = filled;
 
-    if (missingTopics.length) {
+    const aiEnabled = isAiEnabled();
+
+    if (missingTopics.length && aiEnabled) {
       requestAiSuggestions(letter, missingTopics)
         .then((suggestions) => {
           if (!suggestions || !Object.keys(suggestions).length) {
@@ -1418,6 +1427,18 @@
     fillBtn.textContent = "PREENCHER";
     fillBtn.onclick = fillAnswers;
     actions.appendChild(fillBtn);
+
+    const aiToggle = document.createElement("button");
+    aiToggle.className = "sh-actionbtn ghost";
+    const syncAiToggle = () => {
+      aiToggle.textContent = isAiEnabled() ? "IA: ATIVADA" : "IA: DESATIVADA";
+    };
+    syncAiToggle();
+    aiToggle.onclick = () => {
+      setAiEnabled(!isAiEnabled());
+      syncAiToggle();
+    };
+    actions.appendChild(aiToggle);
 
     if (evalBtn) {
       bindEvaluateButtons();
