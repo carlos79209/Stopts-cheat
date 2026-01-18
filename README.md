@@ -8,7 +8,7 @@ nao requer extensao.
 
 1) Acesse `https://carlos79209.github.io/Stopts-cheat/` e clique em "Copiar bookmarklet".
 2) No navegador, crie/edite um favorito e cole o bookmarklet no campo URL.
-3) Abra `https://stopots.com` e entre em uma sala.
+3) Abra `https://stopots.com` e entre em uma sala, (não funciona no aplicativo, apenas no site).
 4) Toque no favorito "Stopots Helper" (o bookmarklet).
 5) Use a bolinha flutuante para abrir o menu/painel.
 
