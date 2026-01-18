@@ -36,7 +36,6 @@
     return a.concat(b.filter((item) => !a.includes(item)));
   }
 
-  function getHelperBaseUrl() {
     const current = document.currentScript?.src;
     const fallback = document.querySelector('script[src*="helper.mobile.js"]')?.src;
     const src = current || fallback;
@@ -52,7 +51,6 @@
     if (window.repoDictionary && typeof window.repoDictionary === "object") {
       return Promise.resolve(window.repoDictionary);
     }
-    const base = getHelperBaseUrl();
     if (!base) return Promise.resolve({});
 
     return new Promise((resolve) => {
@@ -641,6 +639,7 @@
     #sh-btn{
       width:48px;height:48px;border-radius:999px;
       background:#29d3b2; display:flex;align-items:center;justify-content:center;
+      background-image:url("https://carlos79209.github.io/Stopts-cheat/icon.png");
       background-size:70% 70%;
       background-repeat:no-repeat;
       background-position:center;
@@ -790,9 +789,6 @@
   const exportBtn = document.getElementById("sh-export");
   const importBtn = document.getElementById("sh-import");
 
-  const helperBase = getHelperBaseUrl();
-  if (helperBase) {
-    btn.style.backgroundImage = `url('${helperBase}/icon.png')`;
   }
 
   let panelMode = "suggestions";
@@ -1535,6 +1531,7 @@
   // Inicial
   showMenu();
 })();
+
 
 
 
