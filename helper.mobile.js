@@ -1,5 +1,5 @@
 (function () {
-  console.log("📱 Stopots Helper Mobile ativo");
+  console.log("Stopots Helper Mobile ativo");
 
   // ======================
   // STORAGE
@@ -36,6 +36,7 @@
     return a.concat(b.filter((item) => !a.includes(item)));
   }
 
+  function getHelperBaseUrl() {
     const current = document.currentScript?.src;
     const fallback = document.querySelector('script[src*="helper.mobile.js"]')?.src;
     const src = current || fallback;
@@ -46,6 +47,8 @@
     url.pathname = url.pathname.replace(/\/[^\/]*$/, "");
     return url.toString().replace(/\/$/, "");
   }
+
+  const base = getHelperBaseUrl();
 
   function loadRepoDictionary() {
     if (window.repoDictionary && typeof window.repoDictionary === "object") {
@@ -1531,7 +1534,6 @@
   // Inicial
   showMenu();
 })();
-
 
 
 
