@@ -792,8 +792,6 @@
   const exportBtn = document.getElementById("sh-export");
   const importBtn = document.getElementById("sh-import");
 
-  }
-
   let panelMode = "suggestions";
   let lastPanelMode = "suggestions";
 
