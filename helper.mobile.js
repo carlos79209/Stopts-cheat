@@ -641,7 +641,7 @@
 
     #sh-btn{
       width:48px;height:48px;border-radius:999px;
-      background:#29d3b2; display:flex;align-items:center;justify-content:center;
+      background:#000000; display:flex;align-items:center;justify-content:center;
       background-image:url("https://carlos79209.github.io/Stopts-cheat/icon.png");
       background-size:70% 70%;
       background-repeat:no-repeat;
