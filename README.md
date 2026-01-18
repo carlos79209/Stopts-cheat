@@ -3,10 +3,11 @@
 Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico
 e validacao para o jogo Stopots. Funciona via bookmarklet (mobile/desktop) e
 nao requer extensao.
-![WhatsApp Image 2026-01-18 at 07 12 36](https://github.com/user-attachments/assets/41e42aa8-079a-42d6-926b-c815b7b285de)
-![WhatsApp Image 2026-01-18 at 07 12 35 (2)](https://github.com/user-attachments/assets/8ae5606f-3df3-419a-94bc-f8187b702ba2)
-![WhatsApp Image 2026-01-18 at 07 12 35 (1)](https://github.com/user-attachments/assets/6e64c098-239f-4443-89ae-23add78e0502)
-![WhatsApp Image 2026-01-18 at 07 12 35](https://github.com/user-attachments/assets/b30483a3-15e3-4c9c-acb7-37745b1f8f35)
+<img width="488" height="457" alt="image" src="https://github.com/user-attachments/assets/1e1eef04-43ca-47c7-951b-17ffc6bb0dc9" />
+<img width="278" height="240" alt="image" src="https://github.com/user-attachments/assets/50269c75-53b5-428a-a618-df4090aa23c2" />
+<img width="304" height="543" alt="image" src="https://github.com/user-attachments/assets/da2d145b-3d85-4f8f-b899-b90dade56f23" />
+<img width="312" height="254" alt="image" src="https://github.com/user-attachments/assets/00fafce9-a8c6-4f25-86c5-0f20afdb8df5" />
+
 
 
 ## Como usar (passo a passo)
