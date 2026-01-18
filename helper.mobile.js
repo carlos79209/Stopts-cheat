@@ -127,6 +127,12 @@
   // UTILS
   // ======================
   const norm = (s) => (s || "").toString().trim().toUpperCase().replace(/\s+/g, " ");
+  const normStatus = (s) =>
+    (s || "")
+      .toString()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
   const topicAliases = {
     "FRUTA, LEGUME OU VERDURA": "FLV",
@@ -252,14 +258,25 @@
     const blocks = answerBlocks.length ? answerBlocks : document.querySelectorAll("label, div");
 
     const addedWords = [];
+    let hasAnyStatus = false;
+    const statusByBlock = new Map();
 
     blocks.forEach((block) => {
-      const statusText = block
-        .querySelector?.("span, .status")
-        ?.innerText?.toUpperCase();
-      const validated =
-        block.classList.contains("valid") ||
-        (statusText && statusText.includes("VALIDADO"));
+      const statusText = block.querySelector?.("span, .status")?.innerText;
+      const normalized = normStatus(statusText);
+      const isInvalid = normalized.includes("INVALID");
+      const isValid = normalized.includes("VALID") && !isInvalid;
+      const hasStatus = isValid || isInvalid;
+      if (hasStatus) hasAnyStatus = true;
+      statusByBlock.set(block, { hasStatus, isValid });
+    });
+
+    blocks.forEach((block) => {
+      const statusInfo = statusByBlock.get(block);
+      const validated = statusInfo?.hasStatus
+        ? statusInfo.isValid
+        : block.classList.contains("valid");
+      if (hasAnyStatus && !statusInfo?.hasStatus) return;
       if (!validated) return;
 
       const word = extractAnswerText(block);
@@ -285,11 +302,14 @@
   function waitForValidationAndAdd(onDone) {
     const startedAt = Date.now();
     const timer = setInterval(() => {
-      const hasValidated =
-        document.querySelector(".valid") ||
-        [...document.querySelectorAll("div")].some((div) =>
-          div.innerText.toUpperCase().includes("VALIDADO")
-        );
+      const hasStatus = [...document.querySelectorAll("span, .status")].some((el) => {
+        const normalized = normStatus(el.innerText);
+        if (!normalized) return false;
+        const isInvalid = normalized.includes("INVALID");
+        const isValid = normalized.includes("VALID") && !isInvalid;
+        return isValid || isInvalid;
+      });
+      const hasValidated = hasStatus || document.querySelector(".valid");
 
       if (hasValidated || Date.now() - startedAt > 3000) {
         clearInterval(timer);
