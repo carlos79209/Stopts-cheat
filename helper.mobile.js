@@ -778,6 +778,7 @@
       font-weight:800;
     }
     .sh-validation-empty{ font-size:12px; opacity:.85; line-height:1.35; }
+    .sh-validation-actions{ display:flex; gap:6px; margin-top:10px; }
 
     #sh-toast{
       margin-top:8px;
@@ -858,6 +859,14 @@
       empty.className = "sh-validation-empty";
       empty.textContent = "Nenhuma validacao recente.";
       validationView.appendChild(empty);
+      const actions = document.createElement("div");
+      actions.className = "sh-validation-actions";
+      const backBtn = document.createElement("button");
+      backBtn.className = "sh-actionbtn ghost";
+      backBtn.textContent = "Voltar para sugestoes";
+      backBtn.onclick = showSuggestionsView;
+      actions.appendChild(backBtn);
+      validationView.appendChild(actions);
       return;
     }
 
@@ -876,6 +885,14 @@
       empty.className = "sh-validation-empty";
       empty.textContent = "Nenhuma palavra adicionada.";
       validationView.appendChild(empty);
+      const actions = document.createElement("div");
+      actions.className = "sh-validation-actions";
+      const backBtn = document.createElement("button");
+      backBtn.className = "sh-actionbtn ghost";
+      backBtn.textContent = "Voltar para sugestoes";
+      backBtn.onclick = showSuggestionsView;
+      actions.appendChild(backBtn);
+      validationView.appendChild(actions);
       return;
     }
 
@@ -893,6 +910,15 @@
       list.appendChild(item);
     });
     validationView.appendChild(list);
+
+    const actions = document.createElement("div");
+    actions.className = "sh-validation-actions";
+    const backBtn = document.createElement("button");
+    backBtn.className = "sh-actionbtn ghost";
+    backBtn.textContent = "Voltar para sugestoes";
+    backBtn.onclick = showSuggestionsView;
+    actions.appendChild(backBtn);
+    validationView.appendChild(actions);
   }
 
   function showValidationView(result = null) {
