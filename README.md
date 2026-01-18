@@ -3,6 +3,8 @@
 Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico
 e validacao para o jogo Stopots. Funciona via bookmarklet (mobile/desktop) e
 nao requer extensao.
+
+
 <img width="488" height="457" alt="image" src="https://github.com/user-attachments/assets/1e1eef04-43ca-47c7-951b-17ffc6bb0dc9" />
 <img width="278" height="240" alt="image" src="https://github.com/user-attachments/assets/50269c75-53b5-428a-a618-df4090aa23c2" />
 <img width="304" height="543" alt="image" src="https://github.com/user-attachments/assets/da2d145b-3d85-4f8f-b899-b90dade56f23" />
