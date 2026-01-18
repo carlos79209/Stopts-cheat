@@ -755,7 +755,6 @@
     .sh-config-row{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
     #sh-config-text{ width:100%; min-height:120px; border-radius:12px; border:1px solid rgba(255,255,255,.2); padding:10px; background:rgba(0,0,0,.15); color:#fff; font-size:12px; outline:none; }
 
-
     #sh-toast{
       margin-top:8px;
       background:rgba(0,0,0,.22);
@@ -768,6 +767,8 @@
       margin-left:8px;border:none;border-radius:10px;padding:6px 8px;
       font-size:12px;font-weight:900;cursor:pointer;background:#ff8995;color:#fff;
     }
+
+
   `;
   document.head.appendChild(style);
 
@@ -1384,14 +1385,6 @@
         showSuggestionsView();
       }
 
-      if (added && added.length) {
-        const list = added.slice(0, 5).join(", ");
-        const suffix = added.length > 5 ? "..." : "";
-        showToast(`Salvo: ${list}${suffix}`);
-      } else {
-        showToast("Nada para adicionar");
-      }
-
       if (revealPanel) {
         setTimeout(() => {
           panel.style.display = "none";
@@ -1435,7 +1428,6 @@
     reloadDict.textContent = "Recarregar dicionário";
     reloadDict.onclick = () => {
       refreshDictionary().then(() => {
-        showToast("Dicionario recarregado");
         render(true);
       });
     };
