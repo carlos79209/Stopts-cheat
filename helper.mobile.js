@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   console.log("Stopots Helper Mobile ativo");
 
   // ======================
@@ -568,7 +568,7 @@
         "X-Title": "Stopots Helper",
       },
       body: JSON.stringify({
-        model: "mistralai/devstral-2512:free",
+        model: "arcee-ai/trinity-large-preview:free",
         temperature: 0.3,
         messages: [
           { role: "system", content: "You are a game helper." },
@@ -638,7 +638,7 @@
     <div id="sh-menu" aria-hidden="true">
       <div class="sh-menu-title">Stopots Helper</div>
       <button class="sh-menu-btn" id="sh-go-play">Jogar</button>
-      <button class="sh-menu-btn" id="sh-go-config">Configurar dicionário</button>
+      <button class="sh-menu-btn" id="sh-go-config">Configurar dicionÃ¡rio</button>
       <button class="sh-menu-btn" id="sh-set-key">API Key</button>
       <button class="sh-menu-btn sh-menu-close" id="sh-menu-close">Fechar</button>
     </div>
@@ -646,7 +646,7 @@
     <div id="sh-panel" aria-hidden="true">
       <div id="sh-header">
         <div class="sh-header-left">
-          <span class="sh-title" id="sh-title">Sugestões</span>
+          <span class="sh-title" id="sh-title">SugestÃµes</span>
           <span class="sh-sub" id="sh-subtitle"></span>
         </div>
         <div class="sh-header-right">
@@ -747,7 +747,7 @@
 
       overflow:auto;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain; /* evita puxar a página junto */
+      overscroll-behavior: contain; /* evita puxar a pÃ¡gina junto */
       touch-action: pan-y;          /* rolagem suave no mobile */
     }
 
@@ -1052,14 +1052,14 @@
     btn.style.display = "flex";
   }
 
-  // Evita “scroll da página” interferindo com o painel
+  // Evita â€œscroll da pÃ¡ginaâ€ interferindo com o painel
   function lockBodyScroll(lock) {
     document.documentElement.style.overscrollBehavior = lock ? "none" : "";
     document.body.style.overscrollBehavior = lock ? "none" : "";
-    // não vamos mexer em position fixed do body pra não quebrar o site
+    // nÃ£o vamos mexer em position fixed do body pra nÃ£o quebrar o site
   }
 
-  // Impede o toque no painel de “vazar” pra página
+  // Impede o toque no painel de â€œvazarâ€ pra pÃ¡gina
   ["touchstart", "touchmove", "wheel"].forEach((evt) => {
     panel.addEventListener(
       evt,
@@ -1489,7 +1489,7 @@
   }
 
   // >>> CONFIG: abre nova guia
-  // Ajuste este caminho para onde você hospedar a página config:
+  // Ajuste este caminho para onde vocÃª hospedar a pÃ¡gina config:
   // Ex: https://seusite.com/config.html
   goConfig.onclick = () => {
     menu.style.display = "none";
@@ -1550,8 +1550,8 @@
   }
 
   // ======================
-  // Avaliar + adicionar (mantive simples aqui: só aparece se tiver botão AVALIAR)
-  // Você pode plugar sua lógica completa de "validado" depois, se quiser.
+  // Avaliar + adicionar (mantive simples aqui: sÃ³ aparece se tiver botÃ£o AVALIAR)
+  // VocÃª pode plugar sua lÃ³gica completa de "validado" depois, se quiser.
   // ======================
 
   function renderActions() {
@@ -1582,7 +1582,7 @@
 
     const reloadDict = document.createElement("button");
     reloadDict.className = "sh-actionbtn ghost";
-    reloadDict.textContent = "Recarregar dicionário";
+    reloadDict.textContent = "Recarregar dicionÃ¡rio";
     reloadDict.onclick = () => {
       refreshDictionary().then(() => {
         render(true);
@@ -1607,8 +1607,8 @@
     if (!letter || !categories.length) {
       content.innerHTML = `
         <div style="opacity:.85;font-size:12px;line-height:1.35">
-          Entre em uma sala e vá para a tela do jogo.<br/>
-          (Não encontrei letra/categorias ainda)
+          Entre em uma sala e vÃ¡ para a tela do jogo.<br/>
+          (NÃ£o encontrei letra/categorias ainda)
         </div>`;
       return;
     }
@@ -1626,13 +1626,13 @@
         <div class="sh-word">${currentWord}</div>
         <div class="sh-actions-row">
           <button class="copy">COPIAR</button>
-          <button class="next">↻</button>
+          <button class="next">â†»</button>
         </div>
       `;
 
       item.querySelector(".copy").onclick = () => {
         navigator.clipboard.writeText(currentWord);
-        showToast("📋 Copiado!");
+        showToast("ðŸ“‹ Copiado!");
       };
 
       item.querySelector(".next").onclick = () => {
@@ -1666,7 +1666,7 @@
     renderActions();
     renderSuggestions(letter, categories);
 
-    // restaura scroll para não “voltar pro topo”
+    // restaura scroll para nÃ£o â€œvoltar pro topoâ€
     panel.scrollTop = scrollBefore;
   }
 
@@ -1685,6 +1685,7 @@
   // Inicial
   showBubble();
 })();
+
 
 
 

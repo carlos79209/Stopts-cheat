@@ -1,9 +1,9 @@
-# Stopots Helper
+﻿# Stopots Helper
 
-Não use o helper em salas publcas pois ele vai estragar a experiencia de quem cai contra você.
+NÃ£o use o helper em salas publcas pois ele vai estragar a experiencia de quem cai contra vocÃª.
 
 Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico com IA e
-dicionario de palavras que vai sendo incrementado enquanto você joga. Funciona via bookmarklet (mobile/desktop) e
+dicionario de palavras que vai sendo incrementado enquanto vocÃª joga. Funciona via bookmarklet (mobile/desktop) e
 nao requer extensao, nem precisa baixar nada.
 
 <img width="1890" height="1417" alt="Untitled-1" src="https://github.com/user-attachments/assets/ce6c3a0c-c630-4713-b013-d7e9f49f19ba" />
@@ -15,7 +15,7 @@ tutorial completo em video: https://youtu.be/cHtiDXX5qVY
 
 1) Acesse https://carlos79209.github.io/Stopts-cheat e clique em "Copiar bookmarklet".
 2) No navegador, crie/edite um favorito e cole o bookmarklet no campo URL.
-3) Abra https://stopots.com e entre em uma sala, (não funciona no aplicativo, apenas no site).
+3) Abra https://stopots.com e entre em uma sala, (nÃ£o funciona no aplicativo, apenas no site).
 4) Toque no favorito "Stopots Helper" (o bookmarklet).
 5) Use a bolinha flutuante para abrir o menu/painel.
 
@@ -24,14 +24,14 @@ tutorial completo em video: https://youtu.be/cHtiDXX5qVY
 1) Copie o bookmarklet no link acima.
 2) Abra o gerenciador de favoritos do navegador.
 3) Crie um novo favorito (ou edite um existente).
-4) No campo URL/Endereço, cole o bookmarklet completo.
+4) No campo URL/EndereÃ§o, cole o bookmarklet completo.
 5) Salve. Para usar, abra o Stopots e toque no favorito.
 
 ## Configurar API Key (IA)
 
 As sugestoes via IA usam OpenRouter. A chave precisa ficar salva no
 `localStorage` do proprio site do Stopots.
-Modelo atual: `mistralai/devstral-2512:free`.
+Modelo atual: `arcee-ai/trinity-large-preview:free`.
 
 No jogo:
 1) Abra a bolinha -> "API Key".
@@ -63,3 +63,4 @@ No jogo:
 
 - Arraste a bolinha para reposicionar na tela.
 - Toque fora do painel para fechar rapidamente.
+
