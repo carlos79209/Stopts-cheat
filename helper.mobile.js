@@ -622,6 +622,16 @@
   // ======================
   // OVERLAY UI (menu + painel)
   // ======================
+  const existingOverlay = document.getElementById("stopots-helper-overlay");
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  const existingStyle = document.getElementById("stopots-helper-style");
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+
   const overlay = document.createElement("div");
   overlay.id = "stopots-helper-overlay";
   overlay.innerHTML = `
@@ -662,6 +672,7 @@
   document.body.appendChild(overlay);
 
   const style = document.createElement("style");
+  style.id = "stopots-helper-style";
   style.innerHTML = `
     #stopots-helper-overlay{
       position:fixed; right:16px; bottom:16px; z-index:999999;
@@ -966,10 +977,11 @@
 
   function applyPosition(pos) {
     if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") return;
+    const safePos = clampPosition(pos.x, pos.y);
     overlay.style.right = "auto";
     overlay.style.bottom = "auto";
-    overlay.style.left = `${pos.x}px`;
-    overlay.style.top = `${pos.y}px`;
+    overlay.style.left = `${safePos.x}px`;
+    overlay.style.top = `${safePos.y}px`;
   }
 
   const savedPos = loadHelperPosition();
@@ -988,10 +1000,11 @@
 
   function applyPanelPosition(pos) {
     if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") return;
+    const safePos = clampPanelPosition(pos.x, pos.y);
     panel.style.right = "auto";
     panel.style.bottom = "auto";
-    panel.style.left = `${pos.x}px`;
-    panel.style.top = `${pos.y}px`;
+    panel.style.left = `${safePos.x}px`;
+    panel.style.top = `${safePos.y}px`;
   }
 
   function positionPanelNearButton(anchorRect = null) {
@@ -1016,10 +1029,11 @@
 
   function applyMenuPosition(pos) {
     if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") return;
+    const safePos = clampMenuPosition(pos.x, pos.y);
     menu.style.right = "auto";
     menu.style.bottom = "auto";
-    menu.style.left = `${pos.x}px`;
-    menu.style.top = `${pos.y}px`;
+    menu.style.left = `${safePos.x}px`;
+    menu.style.top = `${safePos.y}px`;
   }
 
   function positionMenuNearButton() {
@@ -1029,6 +1043,13 @@
     const y = btnRect.top - menuRect.height - 12;
     const pos = clampMenuPosition(x, y);
     applyMenuPosition(pos);
+  }
+
+  function showBubble() {
+    menu.style.display = "none";
+    panel.style.display = "none";
+    lockBodyScroll(false);
+    btn.style.display = "flex";
   }
 
   // Evita “scroll da página” interferindo com o painel
@@ -1211,17 +1232,12 @@
     if (!menuOpen && !panelOpen) {
       showPanel(null, true);
     } else {
-      menu.style.display = "none";
-      panel.style.display = "none";
-      lockBodyScroll(false);
-      btn.style.display = "flex";
+      showBubble();
     }
   };
 
   closeMenu.onclick = () => {
-    menu.style.display = "none";
-    lockBodyScroll(false);
-    btn.style.display = "flex";
+    showBubble();
   };
 
   backMenu.onclick = showMenu;
@@ -1272,10 +1288,7 @@
   document.addEventListener("pointerdown", (e) => {
     if (overlay.contains(e.target)) return;
     if (menu.style.display === "block" || panel.style.display === "block") {
-      menu.style.display = "none";
-      panel.style.display = "none";
-      lockBodyScroll(false);
-      btn.style.display = "flex";
+      showBubble();
     }
   });
 
@@ -1670,7 +1683,7 @@
   observer.observe(document.body, { childList: true, subtree: true });
 
   // Inicial
-  showMenu();
+  showBubble();
 })();
 
 
