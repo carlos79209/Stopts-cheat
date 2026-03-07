@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
@@ -22,8 +22,8 @@
 </head>
 <body>
   <div class="card">
-    <h1>📱 Stopots Helper Mobile</h1>
-    <p>Use o botão abaixo para copiar seu <b>bookmarklet</b> e ativar o helper dentro do Stopots no celular.</p>
+    <h1>ðŸ“± Stopots Helper Mobile</h1>
+    <p>Use o botÃ£o abaixo para copiar seu <b>bookmarklet</b> e ativar o helper dentro do Stopots no celular.</p>
 
     <div class="row">
       <button class="btn" id="copy">Copiar bookmarklet</button>
@@ -39,14 +39,14 @@
     <ol class="small">
       <li>Abra <a href="https://stopots.com" target="_blank">stopots.com</a> e entre em uma sala</li>
       <li>Abra seus favoritos</li>
-      <li>Toque no favorito “Stopots Helper”</li>
-      <li>A bolinha 📘 aparece no canto — toque para ver sugestões</li>
+      <li>Toque no favorito â€œStopots Helperâ€</li>
+      <li>A bolinha ðŸ“˜ aparece no canto â€” toque para ver sugestÃµes</li>
     </ol>
   </div>
 
   <script>
-    // Troque SEU_USUARIO e SEU_REPO se necessário
-    const helperUrl = location.origin + location.pathname.replace(/\/[^\/]*$/, '') + '/helper.mobile.js';
+    // Troque SEU_USUARIO e SEU_REPO se necessÃ¡rio
+    const helperUrl = "https://s2-dapaz.github.io/Stopts-cheat/helper.mobile.js";
     const bookmarklet = `javascript:(()=>{const s=document.createElement('script');s.src='${helperUrl}?v='+Date.now();document.body.appendChild(s);})();`;
 
     const bmInput = document.getElementById('bm');
@@ -55,12 +55,12 @@
     document.getElementById('copy').onclick = async () => {
       try {
         await navigator.clipboard.writeText(bookmarklet);
-        document.getElementById('status').textContent = '✅ Copiado!';
+        document.getElementById('status').textContent = 'âœ… Copiado!';
         setTimeout(()=>document.getElementById('status').textContent='',1500);
       } catch (e) {
         bmInput.focus();
         bmInput.select();
-        document.getElementById('status').textContent = '⚠️ Se não copiar, selecione e copie manualmente.';
+        document.getElementById('status').textContent = 'âš ï¸ Se nÃ£o copiar, selecione e copie manualmente.';
       }
     };
 
@@ -71,3 +71,4 @@
   </script>
 </body>
 </html>
+

@@ -13,7 +13,7 @@ nao requer extensao, nem precisa baixar nada.
 ## Como usar (passo a passo)
 tutorial completo em video: https://youtu.be/cHtiDXX5qVY
 
-1) Acesse https://carlos79209.github.io/Stopts-cheat e clique em "Copiar bookmarklet".
+1) Acesse https://s2-dapaz.github.io/Stopts-cheat e clique em "Copiar bookmarklet".
 2) No navegador, crie/edite um favorito e cole o bookmarklet no campo URL.
 3) Abra https://stopots.com e entre em uma sala, (nÃ£o funciona no aplicativo, apenas no site).
 4) Toque no favorito "Stopots Helper" (o bookmarklet).
@@ -63,4 +63,5 @@ No jogo:
 
 - Arraste a bolinha para reposicionar na tela.
 - Toque fora do painel para fechar rapidamente.
+
 
