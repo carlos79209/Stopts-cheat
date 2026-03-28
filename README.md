@@ -3,7 +3,7 @@
 Não use o helper em salas publicas pois ele vai estragar a experiencia de quem cai contra você.
 
 Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico com IA e
-dicionario de palavras que vai sendo incrementado enquanto vocÃª joga. Funciona via bookmarklet (mobile/desktop) e
+dicionario de palavras que vai sendo incrementado enquanto você joga. Funciona via bookmarklet (mobile/desktop) e
 nao requer extensao, nem precisa baixar nada.
 
 <img width="1890" height="1417" alt="Untitled-1" src="https://github.com/user-attachments/assets/ce6c3a0c-c630-4713-b013-d7e9f49f19ba" />
