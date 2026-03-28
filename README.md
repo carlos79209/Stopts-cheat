@@ -1,6 +1,6 @@
 ﻿# Stopots Helper
 
-NÃ£o use o helper em salas publcas pois ele vai estragar a experiencia de quem cai contra vocÃª.
+Não use o helper em salas publicas pois ele vai estragar a experiencia de quem cai contra você.
 
 Este projeto adiciona um painel flutuante com sugestoes, preenchimento automatico com IA e
 dicionario de palavras que vai sendo incrementado enquanto vocÃª joga. Funciona via bookmarklet (mobile/desktop) e
